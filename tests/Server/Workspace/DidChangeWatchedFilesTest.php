@@ -21,7 +21,7 @@ class DidChangeWatchedFilesTest extends ServerTestCase
         $projectIndex = new ProjectIndex($sourceIndex = new Index(), $dependenciesIndex = new DependenciesIndex());
         $definitionResolver = new DefinitionResolver($projectIndex);
         $loader = new PhpDocumentLoader(new FileSystemContentRetriever(), $projectIndex, $definitionResolver);
-        $workspace = new Server\Workspace($client, $projectIndex, $dependenciesIndex, $sourceIndex, null, $loader, null);
+        $workspace = new Server\Workspace($client, $projectIndex, $dependenciesIndex, $sourceIndex, $loader);
 
         $fileEvent = new FileEvent('my uri', FileChangeType::DELETED);
 

@@ -18,7 +18,7 @@ class PhpDocumentLoader
     /**
      * A map from URI => PhpDocument of open documents that should be kept in memory
      *
-     * @var PhpDocument
+     * @var PhpDocument[]
      */
     private $documents = [];
 

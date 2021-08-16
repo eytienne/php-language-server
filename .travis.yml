@@ -20,7 +20,7 @@ install:
 
 script:
   - vendor/bin/phpcs -n
-  - vendor/bin/phan
+  - vendor/bin/phan --load-baseline=.phan/baseline.php
   - vendor/bin/phpunit --coverage-clover=coverage.xml --colors=always
   - bash <(curl -s https://codecov.io/bash)
 

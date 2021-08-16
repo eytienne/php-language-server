@@ -2,7 +2,6 @@
 .idea
 vendor/
 .phpls/
-composer.lock
 stubs
 *.ast
 node_modules/
