@@ -1,6 +1,6 @@
 [submodule "validation/frameworks/php-language-server"]
 	path = validation/frameworks/php-language-server
-	url = https://github.com/felixfbecker/php-language-server
+	url = https://github.com/eytienne/php-language-server
 [submodule "validation/frameworks/wordpress"]
 	path = validation/frameworks/wordpress
 	url = https://github.com/wordpress/wordpress

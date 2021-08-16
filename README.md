@@ -6,7 +6,7 @@
 [![Coverage](https://codecov.io/gh/felixfbecker/php-language-server/branch/master/graph/badge.svg)](https://codecov.io/gh/felixfbecker/php-language-server)
 [![semantic-release](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg)](https://github.com/semantic-release/semantic-release)
 [![Minimum PHP Version](https://img.shields.io/badge/php-%3E%3D%207.0-8892BF.svg)](https://php.net/)
-[![License](https://img.shields.io/packagist/l/felixfbecker/language-server.svg)](https://github.com/felixfbecker/php-language-server/blob/master/LICENSE.txt)
+[![License](https://img.shields.io/packagist/l/felixfbecker/language-server.svg)](https://github.com/eytienne/php-language-server/blob/master/LICENSE.txt)
 [![Gitter](https://badges.gitter.im/felixfbecker/php-language-server.svg)](https://gitter.im/felixfbecker/php-language-server?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
 A pure PHP implementation of the open [Language Server Protocol](https://github.com/Microsoft/language-server-protocol).
@@ -54,7 +54,7 @@ For Parameters, it will return the `@param` tag.
 ### [Workspace Symbols](https://github.com/Microsoft/language-server-protocol/blob/master/protocol.md#workspace-symbols-request)
 ![Workspace Symbols demo](images/workspaceSymbol.gif)
 
-The query is matched case-insensitively against the fully qualified name of the symbol.  
+The query is matched case-insensitively against the fully qualified name of the symbol.
 Non-Standard: An empty query will return _all_ symbols found in the workspace.
 
 ### Error reporting through [Publish Diagnostics](https://github.com/Microsoft/language-server-protocol/blob/master/protocol.md#publishdiagnostics-notification)
@@ -146,7 +146,7 @@ Simply run
 
     composer require felixfbecker/language-server
 
-and you will get the latest stable release and all dependencies.  
+and you will get the latest stable release and all dependencies.
 Running `composer update` will update the server to the latest non-breaking version.
 
 After installing the language server and its dependencies,
@@ -191,7 +191,7 @@ Example:
     php bin/php-language-server.php --memory-limit=256M
 
 ## Used by
- - [VS Code PHP IntelliSense](https://github.com/felixfbecker/vscode-php-intellisense)
+ - [VS Code PHP IntelliSense](https://github.com/eytienne/vscode-php-intellisense)
  - [Eclipse Che](https://eclipse.org/che/)
  - [Eclipse IDE (LSP4E-PHP)](https://github.com/eclipselabs/lsp4e-php)
  - NeoVim: [LanguageServer-php-neovim](https://github.com/roxma/LanguageServer-php-neovim) with [LanguageClient neovim](https://github.com/autozimu/LanguageClient-neovim)
@@ -206,18 +206,18 @@ Clone the repository and run
 
 to install dependencies.
 
-Run the tests with 
+Run the tests with
 
     composer test
 
 Lint with
 
     composer lint
-    
+
 The project parses PHPStorm's PHP stubs to get support for PHP builtins. It re-parses them as needed after Composer processes, but after some code changes (such as ones involving the index or parsing) you may have to explicitly re-parse them:
 
     composer run-script parse-stubs
-    
+
 To debug with xDebug ensure that you have this set as an environment variable
 
     PHPLS_ALLOW_XDEBUG=1
