@@ -1,6 +1,6 @@
 <?php
 
-namespace LanguageServer\Tests;
+namespace LanguageServer\Tests\Index;
 
 use PHPUnit\Framework\TestCase;
 use LanguageServer\Index\Index;

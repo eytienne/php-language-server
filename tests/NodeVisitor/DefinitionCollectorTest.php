@@ -1,7 +1,7 @@
 <?php
 declare(strict_types = 1);
 
-namespace LanguageServer\Tests\Server\TextDocument;
+namespace LanguageServer\Tests\NodeVisitor;
 
 use PHPUnit\Framework\TestCase;
 use phpDocumentor\Reflection\DocBlockFactory;
