@@ -15,7 +15,7 @@ abstract class AbstractAggregateIndex implements ReadableIndex
      *
      * @return ReadableIndex[]
      */
-    abstract protected function getIndexes(): array;
+    abstract protected function getIndexes();
 
     public function __construct()
     {

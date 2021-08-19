@@ -10,19 +10,9 @@ use function LanguageServer\getPackageName;
  */
 class ProjectIndex extends AbstractAggregateIndex
 {
-    /**
-     * The index for dependencies
-     *
-     * @var DependenciesIndex
-     */
-    private $dependenciesIndex;
+    private DependenciesIndex $dependenciesIndex;
 
-    /**
-     * The Index for the project source
-     *
-     * @var Index
-     */
-    private $sourceIndex;
+    private Index $sourceIndex;
 
     public function __construct(Index $sourceIndex, DependenciesIndex $dependenciesIndex, \stdClass $composerJson = null)
     {
@@ -32,18 +22,11 @@ class ProjectIndex extends AbstractAggregateIndex
         parent::__construct();
     }
 
-    /**
-     * @return ReadableIndex[]
-     */
-    protected function getIndexes(): array
+    protected function getIndexes()
     {
         return [$this->sourceIndex, $this->dependenciesIndex];
     }
 
-    /**
-     * @param string $uri
-     * @return Index
-     */
     public function getIndexForUri(string $uri): Index
     {
         $packageName = getPackageName($uri, $this->composerJson);

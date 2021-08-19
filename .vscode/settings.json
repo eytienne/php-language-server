@@ -2,6 +2,7 @@
 {
   "search.exclude": {
     "**/validation": true,
-    "**/tests/Validation/cases": true
+    "**/vendor": false,
+    "**/tests/Validation/cases": true,
   }
 }

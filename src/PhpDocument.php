@@ -7,72 +7,54 @@ use LanguageServer\Index\Index;
 use LanguageServerProtocol\{
     Diagnostic, Position, Range
 };
-use Microsoft\PhpParser;
 use Microsoft\PhpParser\Node;
+use Microsoft\PhpParser\Node\SourceFileNode;
+use Microsoft\PhpParser\Parser;
 use phpDocumentor\Reflection\DocBlockFactory;
 
 class PhpDocument
 {
-    /**
-     * The PHPParser instance
-     *
-     * @var PhpParser\Parser
-     */
-    private $parser;
+    private Parser $parser;
 
     /**
      * The DocBlockFactory instance to parse docblocks
-     *
-     * @var DocBlockFactory
      */
-    private $docBlockFactory;
+    private DocBlockFactory $docBlockFactory;
 
     /**
      * The DefinitionResolver instance to resolve reference nodes to definitions
-     *
-     * @var DefinitionResolver
      */
-    private $definitionResolver;
+    private DefinitionResolver $definitionResolver;
 
-    /**
-     * @var Index
-     */
-    private $index;
+    private Index $index;
 
-    /**
-     * The URI of the document
-     *
-     * @var string
-     */
-    private $uri;
+    private string $uri;
 
     /**
      * The AST of the document
-     *
-     * @var Node\SourceFileNode
      */
-    private $sourceFileNode;
+    private SourceFileNode $sourceFileNode;
 
     /**
      * Map from fully qualified name (FQN) to Definition
      *
      * @var Definition[]
      */
-    private $definitions;
+    private array $definitions;
 
     /**
      * Map from fully qualified name (FQN) to Node
      *
      * @var Node[]
      */
-    private $definitionNodes;
+    private array $definitionNodes;
 
     /**
      * Map from fully qualified name (FQN) to array of nodes that reference the symbol
      *
-     * @var Node[][]
+     * @var array<string, Node[]>
      */
-    private $referenceNodes;
+    private array $referenceNodes;
 
     /**
      * Diagnostics for this document that were collected while parsing
@@ -109,7 +91,6 @@ class PhpDocument
      * Get all references of a fully qualified name
      *
      * @param string $fqn The fully qualified name of the symbol
-     * @return Node[]
      */
     public function getReferenceNodesByFqn(string $fqn)
     {
@@ -159,7 +140,7 @@ class PhpDocument
         }
 
         // Register this document on the project for references
-        foreach ($this->referenceNodes as $fqn => $nodes) {
+        foreach ($this->referenceNodes as $fqn => $_nodes) {
             // Cast the key to string. If (string)'2' is set as an array index, it will read out as (int)2. We must
             // deal with incorrect code, so this is a valid scenario.
             $this->index->addReferenceUri((string)$fqn, $this->uri);
@@ -170,8 +151,6 @@ class PhpDocument
 
     /**
      * Returns this document's text content.
-     *
-     * @return string
      */
     public function getContent()
     {
@@ -180,8 +159,6 @@ class PhpDocument
 
     /**
      * Returns this document's diagnostics
-     *
-     * @return Diagnostic[]
      */
     public function getDiagnostics()
     {
@@ -190,30 +167,20 @@ class PhpDocument
 
     /**
      * Returns the URI of the document
-     *
-     * @return string
      */
-    public function getUri(): string
+    public function getUri()
     {
         return $this->uri;
     }
 
     /**
      * Returns the AST of the document
-     *
-     * @return Node\SourceFileNode|null
      */
     public function getSourceFileNode()
     {
         return $this->sourceFileNode;
     }
 
-    /**
-     * Returns the node at a specified position
-     *
-     * @param Position $position
-     * @return Node|null
-     */
     public function getNodeAtPosition(Position $position)
     {
         if ($this->sourceFileNode === null) {
@@ -230,9 +197,6 @@ class PhpDocument
 
     /**
      * Returns a range of the content
-     *
-     * @param Range $range
-     * @return string|null
      */
     public function getRange(Range $range)
     {

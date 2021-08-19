@@ -10,10 +10,7 @@ use Sabre\Event\Promise;
  */
 class FileSystemCache implements Cache
 {
-    /**
-     * @var string
-     */
-    public $cacheDir;
+    public string $cacheDir;
 
     public function __construct()
     {

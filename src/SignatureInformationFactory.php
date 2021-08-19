@@ -8,14 +8,8 @@ use Microsoft\PhpParser\FunctionLike;
 
 class SignatureInformationFactory
 {
-    /** @var DefinitionResolver */
-    private $definitionResolver;
+    private DefinitionResolver $definitionResolver;
 
-    /**
-     * Create a SignatureInformationFactory
-     *
-     * @param DefinitionResolver $definitionResolver
-     */
     public function __construct(DefinitionResolver $definitionResolver)
     {
         $this->definitionResolver = $definitionResolver;
@@ -25,8 +19,6 @@ class SignatureInformationFactory
      * Create a SignatureInformation from a FunctionLike node
      *
      * @param FunctionLike $node Node to create signature information from
-     *
-     * @return SignatureInformation
      */
     public function create(FunctionLike $node): SignatureInformation
     {
@@ -73,8 +65,6 @@ class SignatureInformationFactory
      * Creates a signature information label from parameters
      *
      * @param ParameterInformation[] $params Parameters to create the label from
-     *
-     * @return string
      */
     private function createLabel(array $params): string
     {

@@ -9,43 +9,39 @@ use LanguageServerProtocol\SymbolInformation;
 use Microsoft\PhpParser;
 use Microsoft\PhpParser\Node;
 use Microsoft\PhpParser\FunctionLike;
+use Microsoft\PhpParser\Node\DelimitedList\ParameterDeclarationList;
+use Microsoft\PhpParser\Node\Expression\Variable;
+use Microsoft\PhpParser\Node\QualifiedName;
+use Microsoft\PhpParser\Node\Statement\ClassDeclaration;
+use Microsoft\PhpParser\Token;
 use phpDocumentor\Reflection\{
     DocBlock, DocBlockFactory, Fqsen, Type, TypeResolver, Types
 };
+
+use function LanguageServer\ParserHelpers\isConstantFetch;
 
 class DefinitionResolver
 {
     /**
      * The current project index (for retrieving existing definitions)
-     *
-     * @var \LanguageServer\Index\ReadableIndex
      */
-    private $index;
+    private ReadableIndex $index;
 
     /**
      * Resolves strings to a type object.
-     *
-     * @var \phpDocumentor\Reflection\TypeResolver
      */
-    private $typeResolver;
+    private TypeResolver $typeResolver;
 
     /**
      * Parses Doc Block comments given the DocBlock text and import tables at a position.
-     *
-     * @var DocBlockFactory
      */
-    private $docBlockFactory;
+    private DocBlockFactory $docBlockFactory;
 
     /**
      * Creates SignatureInformation instances
-     *
-     * @var SignatureInformationFactory
      */
-    private $signatureInformationFactory;
+    private SignatureInformationFactory $signatureInformationFactory;
 
-    /**
-     * @param ReadableIndex $index
-     */
     public function __construct(ReadableIndex $index)
     {
         $this->index = $index;
@@ -56,11 +52,8 @@ class DefinitionResolver
 
     /**
      * Builds the declaration line for a given node. Declarations with multiple lines are trimmed.
-     *
-     * @param Node $node
-     * @return string
      */
-    public function getDeclarationLineFromNode($node): string
+    public function getDeclarationLineFromNode(Node $node): string
     {
         // If node is part of a declaration list, build a declaration line that discludes other elements in the list
         //  - [PropertyDeclaration] // public $a, [$b = 3], $c; => public $b = 3;
@@ -92,11 +85,8 @@ class DefinitionResolver
 
     /**
      * Gets the documentation string for a node, if it has one
-     *
-     * @param Node $node
-     * @return string|null
      */
-    public function getDocumentationFromNode($node)
+    public function getDocumentationFromNode(Node $node)
     {
         // Any NamespaceDefinition comments likely apply to the file, not the declaration itself.
         if ($node instanceof Node\Statement\NamespaceDefinition) {
@@ -139,9 +129,6 @@ class DefinitionResolver
 
     /**
      * Gets Doc Block with resolved names for a Node
-     *
-     * @param Node $node
-     * @return DocBlock|null
      */
     private function getDocBlock(Node $node)
     {
@@ -172,11 +159,7 @@ class DefinitionResolver
     }
 
     /**
-     * Create a Definition for a definition node
-     *
-     * @param Node $node
-     * @param string $fqn
-     * @return Definition
+     * Create a Definition for a parser node
      */
     public function createDefinitionFromNode(Node $node, string $fqn = null): Definition
     {
@@ -251,9 +234,6 @@ class DefinitionResolver
 
     /**
      * Given any node, returns the Definition object of the symbol that is referenced
-     *
-     * @param Node $node Any reference node
-     * @return Definition|null
      */
     public function resolveReferenceNodeToDefinition(Node $node)
     {
@@ -285,7 +265,8 @@ class DefinitionResolver
         if ($fqn === 'self' || $fqn === 'static') {
             // Resolve self and static keywords to the containing class
             // (This is not 100% correct for static but better than nothing)
-            $classNode = $node->getFirstAncestor(Node\Statement\ClassDeclaration::class);
+            /** @var ClassDeclaration */
+            $classNode = $node->getFirstAncestor(ClassDeclaration::class);
             if (!$classNode) {
                 return;
             }
@@ -308,7 +289,7 @@ class DefinitionResolver
         // If the node is a function or constant, it could be namespaced, but PHP falls back to global
         // http://php.net/manual/en/language.namespaces.fallback.php
         // TODO - verify that this is not a method
-        $globalFallback = ParserHelpers\isConstantFetch($node) || $parent instanceof Node\Expression\CallExpression;
+        $globalFallback = isConstantFetch($node) || $parent instanceof Node\Expression\CallExpression;
 
         // Return the Definition object from the index index
         return $this->index->getDefinition($fqn, $globalFallback);
@@ -329,8 +310,9 @@ class DefinitionResolver
             return $this->resolveQualifiedNameNodeToFqn($node);
         } else if ($node instanceof Node\Expression\MemberAccessExpression) {
             return $this->resolveMemberAccessExpressionNodeToFqn($node);
-        } else if (ParserHelpers\isConstantFetch($node)) {
-            return (string)($node->getNamespacedName());
+        } else if (isConstantFetch($node)) {
+            /** @var QualifiedName $node */
+            return (string)$node->getNamespacedName();
         } else if (
             // A\B::C - constant access expression
             $node instanceof Node\Expression\ScopedPropertyAccessExpression
@@ -469,13 +451,13 @@ class DefinitionResolver
 
     private function resolveScopedPropertyAccessExpressionNodeToFqn(Node\Expression\ScopedPropertyAccessExpression $scoped)
     {
-        if ($scoped->scopeResolutionQualifier instanceof Node\Expression\Variable) {
+        if ($scoped->scopeResolutionQualifier instanceof Variable) {
             $varType = $this->getTypeFromNode($scoped->scopeResolutionQualifier);
             if ($varType === null) {
                 return null;
             }
             $className = substr((string)$varType->getFqsen(), 1);
-        } elseif ($scoped->scopeResolutionQualifier instanceof Node\QualifiedName) {
+        } elseif ($scoped->scopeResolutionQualifier instanceof QualifiedName) {
             $className = (string)$scoped->scopeResolutionQualifier->getResolvedName();
         } else {
             return null;
@@ -483,7 +465,8 @@ class DefinitionResolver
 
         if ($className === 'self' || $className === 'static' || $className === 'parent') {
             // self and static are resolved to the containing class
-            $classNode = $scoped->getFirstAncestor(Node\Statement\ClassDeclaration::class);
+            /** @var ClassDeclaration */
+            $classNode = $scoped->getFirstAncestor(ClassDeclaration::class);
             if ($classNode === null) {
                 return null;
             }
@@ -526,7 +509,8 @@ class DefinitionResolver
      */
     private static function getContainingClassFqn(Node $node)
     {
-        $classNode = $node->getFirstAncestor(Node\Statement\ClassDeclaration::class);
+        /** @var ClassDeclaration */
+        $classNode = $node->getFirstAncestor(ClassDeclaration::class);
         if ($classNode === null) {
             return null;
         }
@@ -553,7 +537,7 @@ class DefinitionResolver
      * @param Node\Expression\Variable|Node\Expression\ClosureUse $var The variable access
      * @return Node\Expression\Assign|Node\Expression\AssignOp|Node\Param|Node\Expression\ClosureUse|null
      */
-    public function resolveVariableToNode($var)
+    public function resolveVariableToNode($var): Node
     {
         $n = $var;
         // When a use is passed, start outside the closure to not return immediately
@@ -580,7 +564,9 @@ class DefinitionResolver
             // If a function is met, check the parameters and use statements
             if ($n instanceof PhpParser\FunctionLike) {
                 if ($n->parameters !== null) {
-                    foreach ($n->parameters->getElements() as $param) {
+                    /** @var ParameterDeclarationList */
+                    $parameters = $n->parameters;
+                    foreach ($parameters->getElements() as $param) {
                         if ($param->getName() === $name) {
                             return $param;
                         }
@@ -727,7 +713,7 @@ class DefinitionResolver
 
         // CONSTANT FETCH
         // Resolve constants by retrieving corresponding definition type from FQN
-        if (ParserHelpers\isConstantFetch($expr)) {
+        if (isConstantFetch($expr)) {
             $fqn = (string)$expr->getNamespacedName();
             $def = $this->index->getDefinition($fqn, true);
             if ($def !== null) {
@@ -1014,7 +1000,7 @@ class DefinitionResolver
      * Takes any class name node (from a static method call, or new node) and returns a Type object
      * Resolves keywords like self, static and parent
      *
-     * @param Node|PhpParser\Token $class
+     * @param Node|Token $class
      * @return Type
      */
     public function resolveClassNameToType($class): Type

@@ -14,7 +14,7 @@ use function Sabre\Event\coroutine;
 
 foreach ([__DIR__ . '/../../../autoload.php', __DIR__ . '/../autoload.php', __DIR__ . '/../vendor/autoload.php'] as $file) {
     if (file_exists($file)) {
-        require $file;
+        require_once $file;
         break;
     }
 }

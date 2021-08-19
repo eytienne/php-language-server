@@ -16,6 +16,8 @@ use LanguageServerProtocol\{
     Location
 };
 use Sabre\Event\Promise;
+use stdClass;
+
 use function Sabre\Event\coroutine;
 use function LanguageServer\waitForEvent;
 
@@ -24,37 +26,20 @@ use function LanguageServer\waitForEvent;
  */
 class Workspace
 {
-    /**
-     * @var LanguageClient
-     */
-    public $client;
+    public LanguageClient $client;
 
     /**
      * The symbol index for the workspace
-     *
-     * @var ProjectIndex
      */
-    private $projectIndex;
+    private ProjectIndex $projectIndex;
 
-    /**
-     * @var DependenciesIndex
-     */
-    private $dependenciesIndex;
+    private DependenciesIndex $dependenciesIndex;
 
-    /**
-     * @var Index
-     */
-    private $sourceIndex;
+    private Index $sourceIndex;
 
-    /**
-     * @var \stdClass
-     */
-    public $composerLock;
+    public stdClass $composerLock;
 
-    /**
-     * @var PhpDocumentLoader
-     */
-    public $documentLoader;
+    public PhpDocumentLoader $documentLoader;
 
     /**
      * @param LanguageClient    $client            LanguageClient instance used to signal updated results

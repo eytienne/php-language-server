@@ -3,6 +3,7 @@ declare(strict_types = 1);
 
 namespace LanguageServer;
 
+use AdvancedJsonRpc\Dispatcher;
 use LanguageServerProtocol\{
     ServerCapabilities,
     ClientCapabilities,
@@ -15,100 +16,65 @@ use LanguageServer\FilesFinder\{FilesFinder, ClientFilesFinder, FileSystemFilesF
 use LanguageServer\ContentRetriever\{ContentRetriever, ClientContentRetriever, FileSystemContentRetriever};
 use LanguageServer\Index\{DependenciesIndex, GlobalIndex, Index, ProjectIndex, StubsIndex};
 use LanguageServer\Cache\{FileSystemCache, ClientCache};
-use AdvancedJsonRpc;
+use AdvancedJsonRpc\Error as AdvancedJsonRpcError;
+use AdvancedJsonRpc\ErrorCode;
+use AdvancedJsonRpc\ErrorResponse;
+use AdvancedJsonRpc\Request;
+use AdvancedJsonRpc\Response;
+use AdvancedJsonRpc\SuccessResponse;
+use LanguageServer\Server\TextDocument;
+use LanguageServer\Server\Workspace;
 use Sabre\Event\Promise;
+use stdClass;
+
 use function Sabre\Event\coroutine;
 use Throwable;
 use Webmozart\PathUtil\Path;
 
-class LanguageServer extends AdvancedJsonRpc\Dispatcher
+class LanguageServer extends Dispatcher
 {
     /**
      * Handles textDocument/* method calls
-     *
-     * @var Server\TextDocument
      */
-    public $textDocument;
+    public TextDocument $textDocument;
 
     /**
      * Handles workspace/* method calls
-     *
-     * @var Server\Workspace
      */
-    public $workspace;
-
-    /**
-     * @var Server\Window
-     */
-    public $window;
+    public Workspace $workspace;
 
     public $telemetry;
     public $completionItem;
     public $codeLens;
 
-    /**
-     * @var ProtocolReader
-     */
-    protected $protocolReader;
+    protected ProtocolReader $protocolReader;
 
-    /**
-     * @var ProtocolWriter
-     */
-    protected $protocolWriter;
+    protected ProtocolWriter $protocolWriter;
 
-    /**
-     * @var LanguageClient
-     */
-    protected $client;
+    protected LanguageClient $client;
 
-    /**
-     * @var FilesFinder
-     */
-    protected $filesFinder;
+    protected FilesFinder $filesFinder;
 
-    /**
-     * @var ContentRetriever
-     */
-    protected $contentRetriever;
+    protected ContentRetriever $contentRetriever;
 
-    /**
-     * @var PhpDocumentLoader
-     */
-    protected $documentLoader;
+    protected PhpDocumentLoader $documentLoader;
 
     /**
      * The parsed composer.json file in the project, if any
-     *
-     * @var \stdClass
      */
-    protected $composerJson;
+    protected stdClass $composerJson;
 
     /**
      * The parsed composer.lock file in the project, if any
-     *
-     * @var \stdClass
      */
-    protected $composerLock;
+    protected stdClass $composerLock;
 
-    /**
-     * @var GlobalIndex
-     */
-    protected $globalIndex;
+    protected GlobalIndex $globalIndex;
 
-    /**
-     * @var ProjectIndex
-     */
-    protected $projectIndex;
+    protected ProjectIndex $projectIndex;
 
-    /**
-     * @var DefinitionResolver
-     */
-    protected $definitionResolver;
+    protected DefinitionResolver $definitionResolver;
 
-    /**
-     * @param ProtocolReader  $reader
-     * @param ProtocolWriter $writer
-     */
     public function __construct(ProtocolReader $reader, ProtocolWriter $writer)
     {
         parent::__construct($this, '/');
@@ -120,7 +86,7 @@ class LanguageServer extends AdvancedJsonRpc\Dispatcher
         $this->protocolReader->on('message', function (Message $msg) {
             coroutine(function () use ($msg) {
                 // Ignore responses, this is the handler for requests and notifications
-                if (AdvancedJsonRpc\Response::isResponse($msg->body)) {
+                if (Response::isResponse($msg->body)) {
                     return;
                 }
                 $result = null;
@@ -128,25 +94,25 @@ class LanguageServer extends AdvancedJsonRpc\Dispatcher
                 try {
                     // Invoke the method handler to get a result
                     $result = yield $this->dispatch($msg->body);
-                } catch (AdvancedJsonRpc\Error $e) {
+                } catch (AdvancedJsonRpcError $e) {
                     // If a ResponseError is thrown, send it back in the Response
                     $error = $e;
                 } catch (Throwable $e) {
                     // If an unexpected error occurred, send back an INTERNAL_ERROR error response
-                    $error = new AdvancedJsonRpc\Error(
+                    $error = new AdvancedJsonRpcError(
                         (string)$e,
-                        AdvancedJsonRpc\ErrorCode::INTERNAL_ERROR,
+                        ErrorCode::INTERNAL_ERROR,
                         null,
                         $e
                     );
                 }
                 // Only send a Response for a Request
                 // Notifications do not send Responses
-                if (AdvancedJsonRpc\Request::isRequest($msg->body)) {
+                if (Request::isRequest($msg->body)) {
                     if ($error !== null) {
-                        $responseBody = new AdvancedJsonRpc\ErrorResponse($msg->body->id, $error);
+                        $responseBody = new ErrorResponse($msg->body->id, $error);
                     } else {
-                        $responseBody = new AdvancedJsonRpc\SuccessResponse($msg->body->id, $result);
+                        $responseBody = new SuccessResponse($msg->body->id, $result);
                     }
                     $this->protocolWriter->write(new Message($responseBody));
                 }
@@ -160,16 +126,15 @@ class LanguageServer extends AdvancedJsonRpc\Dispatcher
      * The initialize request is sent as the first request from the client to the server.
      *
      * @param ClientCapabilities $capabilities The capabilities provided by the client (editor)
-     * @param string|null $rootPath The rootPath of the workspace. Is null if no folder is open.
-     * @param int|null $processId The process Id of the parent process that started the server. Is null if the process has not been started by another process. If the parent process is not alive then the server should exit (see exit notification) its process.
-     * @return Promise <InitializeResult>
+     * @param string $rootPath The rootPath of the workspace. Is null if no folder is open.
+     * @return Promise<InitializeResult>
      */
-    public function initialize(ClientCapabilities $capabilities, string $rootPath = null, int $processId = null, string $rootUri = null): Promise
+    public function initialize(ClientCapabilities $capabilities, string $rootPath = null, string $rootUri = null): Promise
     {
         if ($rootPath === null && $rootUri !== null) {
             $rootPath = uriToPath($rootUri);
         }
-        return coroutine(function () use ($capabilities, $rootPath, $processId) {
+        return coroutine(function () use ($capabilities, $rootPath) {
 
             if ($capabilities->xfilesProvider) {
                 $this->filesFinder = new ClientFilesFinder($this->client);
@@ -240,7 +205,7 @@ class LanguageServer extends AdvancedJsonRpc\Dispatcher
 
 
             if ($this->textDocument === null) {
-                $this->textDocument = new Server\TextDocument(
+                $this->textDocument = new TextDocument(
                     $this->documentLoader,
                     $this->definitionResolver,
                     $this->client,
@@ -250,7 +215,7 @@ class LanguageServer extends AdvancedJsonRpc\Dispatcher
                 );
             }
             if ($this->workspace === null) {
-                $this->workspace = new Server\Workspace(
+                $this->workspace = new Workspace(
                     $this->client,
                     $this->projectIndex,
                     $dependenciesIndex,

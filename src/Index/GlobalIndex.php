@@ -8,20 +8,10 @@ namespace LanguageServer\Index;
  */
 class GlobalIndex extends AbstractAggregateIndex
 {
-    /**
-     * @var Index
-     */
-    private $stubsIndex;
+    private Index $stubsIndex;
 
-    /**
-     * @var ProjectIndex
-     */
-    private $projectIndex;
+    private ProjectIndex $projectIndex;
 
-    /**
-     * @param StubsIndex   $stubsIndex
-     * @param ProjectIndex $projectIndex
-     */
     public function __construct(StubsIndex $stubsIndex, ProjectIndex $projectIndex)
     {
         $this->stubsIndex = $stubsIndex;
@@ -29,10 +19,7 @@ class GlobalIndex extends AbstractAggregateIndex
         parent::__construct();
     }
 
-    /**
-     * @return ReadableIndex[]
-     */
-    protected function getIndexes(): array
+    protected function getIndexes()
     {
         return [$this->stubsIndex, $this->projectIndex];
     }

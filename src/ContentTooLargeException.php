@@ -10,24 +10,18 @@ class ContentTooLargeException extends \Exception
 {
     /**
      * The URI of the file that exceeded the limit
-     *
-     * @var string
      */
-    public $uri;
+    public string $uri;
 
     /**
      * The size of the file in bytes
-     *
-     * @var int
      */
-    public $size;
+    public int $size;
 
     /**
      * The limit that was exceeded in bytes
-     *
-     * @var int
      */
-    public $limit;
+    public int $limit;
 
     /**
      * @param string     $uri      The URI of the file that exceeded the limit

@@ -13,7 +13,6 @@ class RangeFactory
      * Returns the range the node spans
      *
      * @param Node $node
-     * @return self
      */
     public static function fromNode(Node $node)
     {

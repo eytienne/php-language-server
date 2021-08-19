@@ -4,45 +4,41 @@ declare(strict_types = 1);
 namespace LanguageServer;
 
 use JsonMapper;
+use LanguageServer\Client\TextDocument;
+use LanguageServer\Client\Window;
+use LanguageServer\Client\Workspace;
+use LanguageServer\Client\XCache;
 
 class LanguageClient
 {
     /**
      * Handles textDocument/* methods
-     *
-     * @var Client\TextDocument
      */
-    public $textDocument;
+    public TextDocument $textDocument;
 
     /**
      * Handles window/* methods
-     *
-     * @var Client\Window
      */
-    public $window;
+    public Window $window;
 
     /**
      * Handles workspace/* methods
-     *
-     * @var Client\Workspace
      */
-    public $workspace;
+    public Workspace $workspace;
 
     /**
      * Handles xcache/* methods
-     *
-     * @var Client\XCache
      */
-    public $xcache;
+    public XCache $xcache;
 
     public function __construct(ProtocolReader $reader, ProtocolWriter $writer)
     {
         $handler = new ClientHandler($reader, $writer);
-        $mapper = new JsonMapper;
+        $mapper = new JsonMapper();
 
-        $this->textDocument = new Client\TextDocument($handler, $mapper);
-        $this->window = new Client\Window($handler);
-        $this->workspace = new Client\Workspace($handler, $mapper);
-        $this->xcache = new Client\XCache($handler);
+        $this->textDocument = new TextDocument($handler, $mapper);
+        $this->window = new Window($handler);
+        $this->workspace = new Workspace($handler, $mapper);
+        $this->xcache = new XCache($handler);
     }
 }

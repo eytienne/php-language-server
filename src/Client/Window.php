@@ -11,10 +11,7 @@ use Sabre\Event\Promise;
  */
 class Window
 {
-    /**
-     * @var ClientHandler
-     */
-    private $handler;
+    private ClientHandler $handler;
 
     public function __construct(ClientHandler $handler)
     {

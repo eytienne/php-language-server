@@ -8,15 +8,10 @@ namespace LanguageServer;
  */
 class IdGenerator
 {
-    /**
-     * @var int
-     */
-    public $counter = 1;
+    public int $counter = 1;
 
     /**
      * Returns a unique ID
-     *
-     * @return int
      */
     public function generate()
     {

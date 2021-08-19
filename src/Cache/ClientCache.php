@@ -11,14 +11,8 @@ use Sabre\Event\Promise;
  */
 class ClientCache implements Cache
 {
-    /**
-     * @var LanguageClient
-     */
-    public $client;
+    public LanguageClient $client;
 
-    /**
-     * @param LanguageClient $client
-     */
     public function __construct(LanguageClient $client)
     {
         $this->client = $client;
@@ -27,8 +21,7 @@ class ClientCache implements Cache
     /**
      * Gets a value from the cache
      *
-     * @param string $key
-     * @return Promise <mixed>
+     * @return Promise<mixed>
      */
     public function get(string $key): Promise
     {
@@ -41,7 +34,7 @@ class ClientCache implements Cache
      * Sets a value in the cache
      *
      * @param string $key
-     * @param mixed  $value
+     * @param mixed $value
      * @return Promise
      */
     public function set(string $key, $value): Promise

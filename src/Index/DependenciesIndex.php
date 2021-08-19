@@ -10,20 +10,13 @@ class DependenciesIndex extends AbstractAggregateIndex
      *
      * @var Index[]
      */
-    protected $indexes = [];
+    protected array $indexes = [];
 
-    /**
-     * @return Index[]
-     */
-    protected function getIndexes(): array
+    protected function getIndexes()
     {
         return $this->indexes;
     }
 
-    /**
-     * @param string $packageName
-     * @return Index
-     */
     public function getDependencyIndex(string $packageName): Index
     {
         if (!isset($this->indexes[$packageName])) {
@@ -34,30 +27,17 @@ class DependenciesIndex extends AbstractAggregateIndex
         return $this->indexes[$packageName];
     }
 
-    /**
-     * @param string $packageName
-     * @param Index  $index
-     * @return void
-     */
     public function setDependencyIndex(string $packageName, Index $index)
     {
         $this->indexes[$packageName] = $index;
         $this->registerIndex($index);
     }
 
-    /**
-     * @param string $packageName
-     * @return void
-     */
     public function removeDependencyIndex(string $packageName)
     {
         unset($this->indexes[$packageName]);
     }
 
-    /**
-     * @param string $packageName
-     * @return bool
-     */
     public function hasDependencyIndex(string $packageName): bool
     {
         return isset($this->indexes[$packageName]);

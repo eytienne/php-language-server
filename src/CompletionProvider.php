@@ -119,20 +119,9 @@ class CompletionProvider
         'encoding', // As in declare(encoding='EBCDIC')
     ];
 
-    /**
-     * @var DefinitionResolver
-     */
-    private $definitionResolver;
+    private DefinitionResolver $definitionResolver;
 
-    /**
-     * @var Project
-     */
-    private $project;
-
-    /**
-     * @var ReadableIndex
-     */
-    private $index;
+    private ReadableIndex $index;
 
     /**
      * @param DefinitionResolver $definitionResolver

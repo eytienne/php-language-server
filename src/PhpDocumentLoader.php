@@ -9,6 +9,7 @@ use phpDocumentor\Reflection\DocBlockFactory;
 use Sabre\Event\Promise;
 use function Sabre\Event\coroutine;
 use Microsoft\PhpParser;
+use Microsoft\PhpParser\Parser;
 
 /**
  * Takes care of loading documents and managing "open" documents
@@ -18,46 +19,20 @@ class PhpDocumentLoader
     /**
      * A map from URI => PhpDocument of open documents that should be kept in memory
      *
-     * @var PhpDocument[]
+     * @var array<string, PhpDocument>
      */
-    private $documents = [];
+    private array $documents = [];
 
-    /**
-     * @var ContentRetriever
-     */
-    public $contentRetriever;
+    public ContentRetriever $contentRetriever;
 
-    /**
-     * @var ProjectIndex
-     */
-    private $projectIndex;
+    private ProjectIndex $projectIndex;
 
-    /**
-     * @var Parser
-     */
-    private $parser;
+    private Parser $parser;
 
-    /**
-     * @var PhpParser\Parser
-     */
-    private $tolerantParser;
+    private DocBlockFactory $docBlockFactory;
 
-    /**
-     * @var DocBlockFactory
-     */
-    private $docBlockFactory;
+    private DefinitionResolver $definitionResolver;
 
-    /**
-     * @var DefinitionResolver
-     */
-    private $definitionResolver;
-
-    /**
-     * @param ContentRetriever $contentRetriever
-     * @param ProjectIndex $projectIndex
-     * @param DefinitionResolver $definitionResolver
-     * @internal param ProjectIndex $project
-     */
     public function __construct(
         ContentRetriever $contentRetriever,
         ProjectIndex $projectIndex,
@@ -66,16 +41,13 @@ class PhpDocumentLoader
         $this->contentRetriever = $contentRetriever;
         $this->projectIndex = $projectIndex;
         $this->definitionResolver = $definitionResolver;
-        $this->parser = new PhpParser\Parser();
+        $this->parser = new Parser();
         $this->docBlockFactory = DocBlockFactory::createInstance();
     }
 
     /**
      * Returns the document indicated by uri.
-     * Returns null if the document if not loaded.
-     *
-     * @param string $uri
-     * @return PhpDocument|null
+     * Returns null if the document is not loaded.
      */
     public function get(string $uri)
     {
@@ -86,8 +58,7 @@ class PhpDocumentLoader
      * Returns the document indicated by uri.
      * If the document is not open, loads it.
      *
-     * @param string $uri
-     * @return Promise <PhpDocument>
+     * @return Promise<PhpDocument>
      */
     public function getOrLoad(string $uri): Promise
     {
@@ -99,7 +70,6 @@ class PhpDocumentLoader
      * If the client does not support textDocument/xcontent, tries to read the file from the file system.
      * The document is NOT added to the list of open documents, but definitions are registered.
      *
-     * @param string $uri
      * @return Promise <PhpDocument>
      */
     public function load(string $uri): Promise
@@ -123,13 +93,6 @@ class PhpDocumentLoader
         });
     }
 
-    /**
-     * Builds a PhpDocument instance
-     *
-     * @param string $uri
-     * @param string $content
-     * @return PhpDocument
-     */
     public function create(string $uri, string $content): PhpDocument
     {
         return new PhpDocument(
@@ -144,10 +107,6 @@ class PhpDocumentLoader
 
     /**
      * Ensures a document is loaded and added to the list of open documents.
-     *
-     * @param string $uri
-     * @param string $content
-     * @return void
      */
     public function open(string $uri, string $content)
     {
@@ -163,9 +122,6 @@ class PhpDocumentLoader
 
     /**
      * Removes the document with the specified URI from the list of open documents
-     *
-     * @param string $uri
-     * @return void
      */
     public function close(string $uri)
     {
@@ -174,9 +130,6 @@ class PhpDocumentLoader
 
     /**
      * Returns true if the document is open (and loaded)
-     *
-     * @param string $uri
-     * @return bool
      */
     public function isOpen(string $uri): bool
     {

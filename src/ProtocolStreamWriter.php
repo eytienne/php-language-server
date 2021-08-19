@@ -12,14 +12,14 @@ use Sabre\Event\{
 class ProtocolStreamWriter implements ProtocolWriter
 {
     /**
-     * @var resource $output
+     * @var resource
      */
     private $output;
 
     /**
-     * @var array $messages
+     * @array-shape ['message' => (string)$msg, 'promise' => $promise]
      */
-    private $messages = [];
+    private array $messages = [];
 
     /**
      * @param resource $output
@@ -51,8 +51,6 @@ class ProtocolStreamWriter implements ProtocolWriter
 
     /**
      * Writes pending messages to the output stream.
-     *
-     * @return void
      */
     private function flush()
     {

@@ -7,15 +7,12 @@ use AdvancedJsonRpc\Message as MessageBody;
 
 class Message
 {
-    /**
-     * @var MessageBody
-     */
-    public $body;
+    public MessageBody $body;
 
     /**
      * @var string[]
      */
-    public $headers;
+    public array $headers;
 
     /**
      * Parses a message
