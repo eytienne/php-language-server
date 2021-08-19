@@ -4,12 +4,11 @@ declare(strict_types = 1);
 namespace LanguageServer;
 
 use AdvancedJsonRpc\Message as MessageBody;
-use LanguageServer\Message;
 
 class Message
 {
     /**
-     * @var \AdvancedJsonRpc\Message
+     * @var MessageBody
      */
     public $body;
 
@@ -39,7 +38,7 @@ class Message
     }
 
     /**
-     * @param \AdvancedJsonRpc\Message $body
+     * @param MessageBody $body
      * @param string[] $headers
      */
     public function __construct(MessageBody $body = null, array $headers = [])
