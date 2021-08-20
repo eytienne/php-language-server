@@ -53,9 +53,9 @@ class TextDocument
 
     protected ReadableIndex $index;
 
-    protected stdClass $composerJson;
+    protected ?stdClass $composerJson;
 
-    protected stdClass $composerLock;
+    protected ?stdClass $composerLock;
 
     public function __construct(
         PhpDocumentLoader $documentLoader,

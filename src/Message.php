@@ -7,7 +7,7 @@ use AdvancedJsonRpc\Message as MessageBody;
 
 class Message
 {
-    public MessageBody $body;
+    public ?MessageBody $body;
 
     /**
      * @var string[]

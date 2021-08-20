@@ -27,14 +27,14 @@ class Definition
      *  - TestNamespace\TestClass::staticTestMethod()
      *  - TestNamespace\TestClass->testMethod()
      */
-    public ?string $fqn;
+    public ?string $fqn = null;
 
     /**
      * For class or interfaces, the FQNs of extended classes and implemented interfaces
      *
      * @var string[]
      */
-    public array $extends;
+    public ?array $extends = null;
 
     /**
      * `false` for classes, interfaces, traits, functions and non-class constants
@@ -68,7 +68,7 @@ class Definition
      * Can also be a compound type.
      * If it is unknown, will be Types\Mixed_.
      */
-    public Type $type;
+    public ?Type $type = null;
 
     /**
      * The first line of the declaration, for use in textDocument/hover
@@ -78,12 +78,12 @@ class Definition
     /**
      * A documentation string, for use in textDocument/hover
      */
-    public string $documentation;
+    public ?string $documentation = null;
 
     /**
      * Signature information if this definition is for a FunctionLike, for use in textDocument/signatureHelp
      */
-    public SignatureInformation $signatureInformation;
+    public ?SignatureInformation $signatureInformation = null;
 
     /**
      * Yields the definitons of all ancestor classes (the Definition fqn is yielded as key)

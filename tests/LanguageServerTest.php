@@ -68,6 +68,7 @@ class LanguageServerTest extends TestCase
         $capabilities = new ClientCapabilities;
         $server->initialize($capabilities, realpath(__DIR__ . '/../fixtures'));
         $promise->wait();
+        $this->assertTrue(true, "ended without problem");
     }
 
     public function testIndexingWithFilesAndContentRequests()

@@ -34,9 +34,9 @@ class Indexer
 
     private PhpDocumentLoader $documentLoader;
 
-    private stdClass $composerLock;
+    private ?stdClass $composerLock;
 
-    private stdClass $composerJson;
+    private ?stdClass $composerJson;
 
     /**
      * @param FilesFinder       $filesFinder
@@ -56,8 +56,8 @@ class Indexer
         DependenciesIndex $dependenciesIndex,
         Index $sourceIndex,
         PhpDocumentLoader $documentLoader,
-        \stdClass $composerLock = null,
-        \stdClass $composerJson = null
+        stdClass $composerLock = null,
+        stdClass $composerJson = null
     ) {
         $this->filesFinder = $filesFinder;
         $this->rootPath = $rootPath;

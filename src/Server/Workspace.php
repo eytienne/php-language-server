@@ -37,7 +37,9 @@ class Workspace
 
     private Index $sourceIndex;
 
-    public stdClass $composerLock;
+    public ?stdClass $composerJson;
+
+    public ?stdClass $composerLock;
 
     public PhpDocumentLoader $documentLoader;
 
@@ -56,9 +58,9 @@ class Workspace
         $this->sourceIndex = $sourceIndex;
         $this->projectIndex = $projectIndex;
         $this->dependenciesIndex = $dependenciesIndex;
-        $this->composerLock = $composerLock;
         $this->documentLoader = $documentLoader;
         $this->composerJson = $composerJson;
+        $this->composerLock = $composerLock;
     }
 
     /**

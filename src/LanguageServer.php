@@ -36,12 +36,12 @@ class LanguageServer extends Dispatcher
     /**
      * Handles textDocument/* method calls
      */
-    public TextDocument $textDocument;
+    public ?TextDocument $textDocument = null;
 
     /**
      * Handles workspace/* method calls
      */
-    public Workspace $workspace;
+    public ?Workspace $workspace = null;
 
     public $telemetry;
     public $completionItem;
@@ -62,12 +62,12 @@ class LanguageServer extends Dispatcher
     /**
      * The parsed composer.json file in the project, if any
      */
-    protected stdClass $composerJson;
+    protected ?stdClass $composerJson = null;
 
     /**
      * The parsed composer.lock file in the project, if any
      */
-    protected stdClass $composerLock;
+    protected ?stdClass $composerLock = null;
 
     protected GlobalIndex $globalIndex;
 
