@@ -24,6 +24,11 @@ class Indexer
 
     private string $rootPath;
 
+    /**
+     * @var string[] Glob patterns to exclude from indexing.
+     */
+    private array $exclude;
+
     private LanguageClient $client;
 
     private Cache $cache;
@@ -41,16 +46,18 @@ class Indexer
     /**
      * @param FilesFinder       $filesFinder
      * @param string            $rootPath
+     * @param string[]          $exclude
      * @param LanguageClient    $client
      * @param Cache             $cache
      * @param DependenciesIndex $dependenciesIndex
      * @param Index             $sourceIndex
      * @param PhpDocumentLoader $documentLoader
-     * @param stdClass    $composerLock
+     * @param stdClass          $composerLock
      */
     public function __construct(
         FilesFinder $filesFinder,
         string $rootPath,
+        array $exclude,
         LanguageClient $client,
         Cache $cache,
         DependenciesIndex $dependenciesIndex,
@@ -61,6 +68,7 @@ class Indexer
     ) {
         $this->filesFinder = $filesFinder;
         $this->rootPath = $rootPath;
+        $this->exclude = $exclude;
         $this->client = $client;
         $this->cache = $cache;
         $this->dependenciesIndex = $dependenciesIndex;
@@ -81,6 +89,19 @@ class Indexer
 
             $pattern = Path::makeAbsolute('**/*.php', $this->rootPath);
             $uris = yield $this->filesFinder->find($pattern);
+
+            /** @var string[][] */
+            $excludedUris = [];
+            foreach ($this->exclude as $exclude) {
+                $pattern = Path::makeAbsolute($exclude, $this->rootPath);
+                if(!str_ends_with($pattern, ".php")) {
+                    $pattern = Path::makeAbsolute('**/*.php', $pattern);
+                }
+                $excludedUris[] = yield $this->filesFinder->find($pattern);
+            }
+            $excludedUris = array_merge(...$excludedUris);
+
+            $uris = array_diff($uris, $excludedUris);
 
             $count = count($uris);
             $startTime = microtime(true);

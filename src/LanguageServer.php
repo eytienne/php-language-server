@@ -26,7 +26,7 @@ use LanguageServer\Server\TextDocument;
 use LanguageServer\Server\Workspace;
 use Sabre\Event\Promise;
 use stdClass;
-
+use function LanguageServer\array_merge_recursive2;
 use function Sabre\Event\coroutine;
 use Throwable;
 use Webmozart\PathUtil\Path;
@@ -128,13 +128,23 @@ class LanguageServer extends Dispatcher
      * @param ClientCapabilities $capabilities The capabilities provided by the client (editor)
      * @param string $rootPath The rootPath of the workspace. Is null if no folder is open.
      * @return Promise<InitializeResult>
+     *
+     * @see https://microsoft.github.io/language-server-protocol/specifications/specification-3-17/#initializeParams
      */
-    public function initialize(ClientCapabilities $capabilities, string $rootPath = null, string $rootUri = null): Promise
+    public function initialize(
+        ClientCapabilities $capabilities,
+        string $rootPath = null,
+        string $rootUri = null,
+        ?InitializationOptions $initializationOptions = null
+    ): Promise
     {
+        /** @var InitializationOptions */
+        $initializationOptions = (object) array_merge_recursive2((array) new InitializationOptions(), (array) $initializationOptions);
+
         if ($rootPath === null && $rootUri !== null) {
             $rootPath = uriToPath($rootUri);
         }
-        return coroutine(function () use ($capabilities, $rootPath) {
+        return coroutine(function () use ($capabilities, $rootPath, $initializationOptions) {
 
             if ($capabilities->xfilesProvider) {
                 $this->filesFinder = new ClientFilesFinder($this->client);
@@ -192,6 +202,7 @@ class LanguageServer extends Dispatcher
                 $indexer = new Indexer(
                     $this->filesFinder,
                     $rootPath,
+                    $initializationOptions->exclude,
                     $this->client,
                     $cache,
                     $dependenciesIndex,
