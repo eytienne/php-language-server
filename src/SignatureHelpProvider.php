@@ -23,7 +23,6 @@ class SignatureHelpProvider
      *
      * @param DefinitionResolver $definitionResolver
      * @param ReadableIndex      $index
-     * @param PhpDocumentLoader  $documentLoader
      */
     public function __construct(DefinitionResolver $definitionResolver, ReadableIndex $index)
     {

@@ -537,7 +537,7 @@ class DefinitionResolver
      * @param Node\Expression\Variable|Node\Expression\ClosureUse $var The variable access
      * @return Node\Expression\Assign|Node\Expression\AssignOp|Node\Param|Node\Expression\ClosureUse|null
      */
-    public function resolveVariableToNode($var): Node
+    public function resolveVariableToNode($var): ?Node
     {
         $n = $var;
         // When a use is passed, start outside the closure to not return immediately
