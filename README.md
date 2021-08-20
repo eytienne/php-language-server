@@ -199,7 +199,7 @@ Example:
 
 ## Contributing
 
-You need at least PHP 7.0 and Composer installed.
+You need at least PHP 7.4 and Composer installed.
 Clone the repository and run
 
     composer install
