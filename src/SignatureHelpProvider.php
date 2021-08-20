@@ -14,27 +14,20 @@ use function Sabre\Event\coroutine;
 
 class SignatureHelpProvider
 {
-    /** @var DefinitionResolver */
-    private $definitionResolver;
+    private DefinitionResolver $definitionResolver;
 
-    /** @var ReadableIndex */
-    private $index;
-
-    /** @var PhpDocumentLoader */
-    private $documentLoader;
+    private ReadableIndex $index;
 
     /**
      * Constructor
      *
      * @param DefinitionResolver $definitionResolver
      * @param ReadableIndex      $index
-     * @param PhpDocumentLoader  $documentLoader
      */
-    public function __construct(DefinitionResolver $definitionResolver, ReadableIndex $index, PhpDocumentLoader $documentLoader)
+    public function __construct(DefinitionResolver $definitionResolver, ReadableIndex $index)
     {
         $this->definitionResolver = $definitionResolver;
         $this->index = $index;
-        $this->documentLoader = $documentLoader;
     }
 
     /**

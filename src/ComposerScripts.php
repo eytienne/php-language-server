@@ -6,15 +6,15 @@ namespace LanguageServer;
 use LanguageServer\FilesFinder\FileSystemFilesFinder;
 use LanguageServer\ContentRetriever\FileSystemContentRetriever;
 use LanguageServer\Index\StubsIndex;
+use Microsoft\PhpParser\Parser;
 use phpDocumentor\Reflection\DocBlockFactory;
-use Webmozart\PathUtil\Path;
 use Sabre\Uri;
+use Webmozart\PathUtil\Path;
 use function Sabre\Event\coroutine;
-use Microsoft\PhpParser;
 
 foreach ([__DIR__ . '/../../../autoload.php', __DIR__ . '/../autoload.php', __DIR__ . '/../vendor/autoload.php'] as $file) {
     if (file_exists($file)) {
-        require $file;
+        require_once $file;
         break;
     }
 }
@@ -24,30 +24,24 @@ class ComposerScripts
     public static function parseStubs()
     {
         coroutine(function () {
-
-            $index = new StubsIndex;
-
-            $finder = new FileSystemFilesFinder;
-            $contentRetriever = new FileSystemContentRetriever;
-            $docBlockFactory = DocBlockFactory::createInstance();
-            $parser = new PhpParser\Parser();
-            $definitionResolver = new DefinitionResolver($index);
-
-            $stubsLocation = null;
-            foreach ([__DIR__ . '/../../../jetbrains/phpstorm-stubs', __DIR__ . '/../vendor/jetbrains/phpstorm-stubs'] as $dir) {
-                if (file_exists($dir)) {
-                    $stubsLocation = Path::canonicalize($dir);
-                    break;
-                }
-            }
-            if (!$stubsLocation) {
+            $stubsLocation = Path::canonicalize(__DIR__ . '/../vendor/jetbrains/phpstorm-stubs');
+            if (!file_exists($stubsLocation)) {
                 throw new \Exception('jetbrains/phpstorm-stubs package not found');
             }
 
-            $uris = yield $finder->find("$stubsLocation/**/*.php");
+            /** @var string[] */
+            $uris = yield (new FileSystemFilesFinder())->find("$stubsLocation/**/*.php");
+            $contentRetriever = new FileSystemContentRetriever();
+
+            $index = new StubsIndex();
+
+            $parser = new Parser();
+            $docBlockFactory = DocBlockFactory::createInstance();
+            $definitionResolver = new DefinitionResolver($index);
 
             foreach ($uris as $uri) {
-                echo "Parsing $uri\n";
+                echo "Parsing stub $uri\n";
+                /** @var string */
                 $content = yield $contentRetriever->retrieve($uri);
 
                 // Change URI to phpstubs://
@@ -61,11 +55,8 @@ class ComposerScripts
             }
 
             $index->setComplete();
-
             echo "Saving Index\n";
-
             $index->save();
-
             echo "Finished\n";
         })->wait();
     }

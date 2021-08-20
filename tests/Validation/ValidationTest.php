@@ -15,6 +15,7 @@ use PHPUnit\Framework\TestCase;
 use LanguageServer\ClientHandler;
 use LanguageServer\Message;
 use AdvancedJsonRpc;
+use DirectoryIterator;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use Sabre\Event\Loop;
@@ -31,7 +32,9 @@ class ValidationTest extends TestCase
         $disabled = json_decode(file_get_contents(__DIR__ . '/disabled.json'));
 
         foreach (new RecursiveIteratorIterator($iterator) as $file) {
-            if (strpos(\strrev((string)$file), \strrev(".php")) === 0 && !\in_array(basename((string)$file), $disabled)) {
+            /** @var DirectoryIterator $file */
+            if (
+                str_ends_with($file->getFilename(), ".php") && !\in_array($file->getBasename(), $disabled)) {
                 if ($file->getSize() < 100000) {
                     $testProviderArray[] = [$file->getPathname()];
                 }
@@ -117,7 +120,7 @@ class ValidationTest extends TestCase
     }
 
     /**
-     * @param $definitions Definition[]
+     * @param Definition[] $definitions
      * @return array|\array[]
      */
     private function getTestValuesFromDefs($definitions): array

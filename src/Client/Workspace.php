@@ -13,15 +13,9 @@ use JsonMapper;
  */
 class Workspace
 {
-    /**
-     * @var ClientHandler
-     */
-    private $handler;
+    private ClientHandler $handler;
 
-    /**
-     * @var JsonMapper
-     */
-    private $mapper;
+    private JsonMapper $mapper;
 
     public function __construct(ClientHandler $handler, JsonMapper $mapper)
     {
@@ -33,7 +27,7 @@ class Workspace
      * Returns a list of all files in a directory
      *
      * @param string $base The base directory (defaults to the workspace)
-     * @return Promise <TextDocumentIdentifier[]> Array of documents
+     * @return Promise<TextDocumentIdentifier[]> Array of documents
      */
     public function xfiles(string $base = null): Promise
     {

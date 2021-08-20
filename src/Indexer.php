@@ -9,6 +9,8 @@ use LanguageServer\Index\{DependenciesIndex, Index};
 use LanguageServerProtocol\MessageType;
 use Webmozart\PathUtil\Path;
 use Sabre\Event\Promise;
+use stdClass;
+
 use function Sabre\Event\coroutine;
 
 class Indexer
@@ -18,50 +20,23 @@ class Indexer
      */
     const CACHE_VERSION = 3;
 
-    /**
-     * @var FilesFinder
-     */
-    private $filesFinder;
+    private FilesFinder $filesFinder;
 
-    /**
-     * @var string
-     */
-    private $rootPath;
+    private string $rootPath;
 
-    /**
-     * @var LanguageClient
-     */
-    private $client;
+    private LanguageClient $client;
 
-    /**
-     * @var Cache
-     */
-    private $cache;
+    private Cache $cache;
 
-    /**
-     * @var DependenciesIndex
-     */
-    private $dependenciesIndex;
+    private DependenciesIndex $dependenciesIndex;
 
-    /**
-     * @var Index
-     */
-    private $sourceIndex;
+    private Index $sourceIndex;
 
-    /**
-     * @var PhpDocumentLoader
-     */
-    private $documentLoader;
+    private PhpDocumentLoader $documentLoader;
 
-    /**
-     * @var \stdClasss
-     */
-    private $composerLock;
+    private ?stdClass $composerLock;
 
-    /**
-     * @var \stdClasss
-     */
-    private $composerJson;
+    private ?stdClass $composerJson;
 
     /**
      * @param FilesFinder       $filesFinder
@@ -71,7 +46,7 @@ class Indexer
      * @param DependenciesIndex $dependenciesIndex
      * @param Index             $sourceIndex
      * @param PhpDocumentLoader $documentLoader
-     * @param \stdClass|null    $composerLock
+     * @param stdClass    $composerLock
      */
     public function __construct(
         FilesFinder $filesFinder,
@@ -81,8 +56,8 @@ class Indexer
         DependenciesIndex $dependenciesIndex,
         Index $sourceIndex,
         PhpDocumentLoader $documentLoader,
-        \stdClass $composerLock = null,
-        \stdClass $composerJson = null
+        stdClass $composerLock = null,
+        stdClass $composerJson = null
     ) {
         $this->filesFinder = $filesFinder;
         $this->rootPath = $rootPath;
@@ -98,7 +73,7 @@ class Indexer
     /**
      * Will read and parse the passed source files in the project and add them to the appropiate indexes
      *
-     * @return Promise <void>
+     * @return Promise<void>
      */
     public function index(): Promise
     {

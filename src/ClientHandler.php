@@ -8,20 +8,11 @@ use Sabre\Event\Promise;
 
 class ClientHandler
 {
-    /**
-     * @var ProtocolReader
-     */
-    public $protocolReader;
+    public ProtocolReader $protocolReader;
 
-    /**
-     * @var ProtocolWriter
-     */
-    public $protocolWriter;
+    public ProtocolWriter $protocolWriter;
 
-    /**
-     * @var IdGenerator
-     */
-    public $idGenerator;
+    public IdGenerator $idGenerator;
 
     public function __construct(ProtocolReader $protocolReader, ProtocolWriter $protocolWriter)
     {

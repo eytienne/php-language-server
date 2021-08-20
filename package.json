@@ -2,7 +2,7 @@
   "private": true,
   "repository": {
     "type": "git",
-    "url": "https://github.com/felixfbecker/php-language-server.git"
+    "url": "https://github.com/eytienne/php-language-server.git"
   },
   "devDependencies": {
     "@semantic-release/exec": "^3.1.0",

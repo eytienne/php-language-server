@@ -15,7 +15,7 @@ class FileSystemFilesFinder implements FilesFinder
      * If the client does not support workspace/xfiles, it falls back to searching the file system directly.
      *
      * @param string $glob
-     * @return Promise <string[]>
+     * @return Promise<string[]>
      */
     public function find(string $glob): Promise
     {

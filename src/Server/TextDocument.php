@@ -28,6 +28,8 @@ use LanguageServerProtocol\{
 use Microsoft\PhpParser\Node;
 use Sabre\Event\Promise;
 use Sabre\Uri;
+use stdClass;
+
 use function LanguageServer\{
     isVendored, waitForEvent, getPackageName
 };
@@ -40,67 +42,34 @@ class TextDocument
 {
     /**
      * The lanugage client object to call methods on the client
-     *
-     * @var \LanguageServer\LanguageClient
      */
-    protected $client;
+    protected LanguageClient $client;
 
-    /**
-     * @var Project
-     */
-    protected $project;
+    protected DefinitionResolver $definitionResolver;
 
-    /**
-     * @var DefinitionResolver
-     */
-    protected $definitionResolver;
+    protected CompletionProvider $completionProvider;
 
-    /**
-     * @var CompletionProvider
-     */
-    protected $completionProvider;
+    protected SignatureHelpProvider $signatureHelpProvider;
 
-    /**
-     * @var SignatureHelpProvider
-     */
-    protected $signatureHelpProvider;
+    protected ReadableIndex $index;
 
-    /**
-     * @var ReadableIndex
-     */
-    protected $index;
+    protected ?stdClass $composerJson;
 
-    /**
-     * @var \stdClass|null
-     */
-    protected $composerJson;
+    protected ?stdClass $composerLock;
 
-    /**
-     * @var \stdClass|null
-     */
-    protected $composerLock;
-
-    /**
-     * @param PhpDocumentLoader $documentLoader
-     * @param DefinitionResolver $definitionResolver
-     * @param LanguageClient $client
-     * @param ReadableIndex $index
-     * @param \stdClass $composerJson
-     * @param \stdClass $composerLock
-     */
     public function __construct(
         PhpDocumentLoader $documentLoader,
         DefinitionResolver $definitionResolver,
         LanguageClient $client,
         ReadableIndex $index,
-        \stdClass $composerJson = null,
-        \stdClass $composerLock = null
+        stdClass $composerJson = null,
+        stdClass $composerLock = null
     ) {
         $this->documentLoader = $documentLoader;
         $this->client = $client;
         $this->definitionResolver = $definitionResolver;
         $this->completionProvider = new CompletionProvider($this->definitionResolver, $index);
-        $this->signatureHelpProvider = new SignatureHelpProvider($this->definitionResolver, $index, $documentLoader);
+        $this->signatureHelpProvider = new SignatureHelpProvider($this->definitionResolver, $index);
         $this->index = $index;
         $this->composerJson = $composerJson;
         $this->composerLock = $composerLock;

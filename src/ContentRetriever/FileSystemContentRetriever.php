@@ -15,7 +15,7 @@ class FileSystemContentRetriever implements ContentRetriever
      * Retrieves the content of a text document identified by the URI from the file system
      *
      * @param string $uri The URI of the document
-     * @return Promise <string> Resolved with the content as a string
+     * @return Promise<string> Resolved with the content as a string
      */
     public function retrieve(string $uri): Promise
     {

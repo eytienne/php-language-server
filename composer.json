@@ -21,12 +21,11 @@
         }
     ],
     "require": {
-        "php": "^7.0",
+        "php": "^7.4",
         "composer/xdebug-handler": "^1.0",
         "felixfbecker/advanced-json-rpc": "^3.0.0",
         "felixfbecker/language-server-protocol": "^1.0.1",
-        "jetbrains/phpstorm-stubs": "dev-master",
-        "microsoft/tolerant-php-parser": "0.0.*",
+        "jetbrains/phpstorm-stubs": "v2019.1",
         "netresearch/jsonmapper": "^1.0",
         "phpdocumentor/reflection-docblock": "^4.0.0",
         "psr/log": "^1.0",
@@ -36,9 +35,11 @@
         "webmozart/path-util": "^2.3"
     },
     "require-dev": {
+        "microsoft/tolerant-php-parser": "~v0.0.20",
+        "phan/phan": "2.6.0",
         "phpunit/phpunit": "^6.3",
-        "phan/phan": "1.1.4",
-        "squizlabs/php_codesniffer": "^3.1"
+        "squizlabs/php_codesniffer": "^3.1",
+        "symfony/polyfill-php80": "^1.23"
     },
     "autoload": {
         "psr-4": {

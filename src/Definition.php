@@ -7,6 +7,7 @@ use LanguageServer\Index\ReadableIndex;
 use phpDocumentor\Reflection\{Types, Type, TypeResolver};
 use LanguageServerProtocol\SymbolInformation;
 use Generator;
+use LanguageServerProtocol\SignatureInformation;
 
 /**
  * Class used to represent symbols
@@ -25,52 +26,39 @@ class Definition
      *  - TestNamespace\TestClass->testProperty
      *  - TestNamespace\TestClass::staticTestMethod()
      *  - TestNamespace\TestClass->testMethod()
-     *
-     * @var string|null
      */
-    public $fqn;
+    public ?string $fqn = null;
 
     /**
      * For class or interfaces, the FQNs of extended classes and implemented interfaces
      *
      * @var string[]
      */
-    public $extends;
+    public ?array $extends = null;
 
     /**
-     * False for classes, interfaces, traits, functions and non-class constants
-     * True for methods, properties and class constants
+     * `false` for classes, interfaces, traits, functions and non-class constants
+     * `true` for methods, properties and class constants
      * This is so methods and properties are not suggested in the global scope
-     *
-     * @var bool
      */
-    public $isMember;
+    public bool $isMember;
 
     /**
-     * True if this definition is affected by global namespace fallback (global function or global constant)
-     *
-     * @var bool
+     * `true` if this definition is affected by global namespace fallback (global function or global constant)
      */
-    public $roamed;
+    public bool $roamed;
 
     /**
-     * False for instance methods and properties
-     *
-     * @var bool
+     * `false` for instance methods and properties
      */
-    public $isStatic;
+    public bool $isStatic;
 
     /**
      * True if the Definition is a class
-     *
-     * @var bool
      */
-    public $canBeInstantiated;
+    public bool $canBeInstantiated;
 
-    /**
-     * @var SymbolInformation
-     */
-    public $symbolInformation;
+    public SymbolInformation $symbolInformation;
 
     /**
      * The type a reference to this symbol will resolve to.
@@ -79,38 +67,29 @@ class Definition
      * For any other declaration it will be null.
      * Can also be a compound type.
      * If it is unknown, will be Types\Mixed_.
-     *
-     * @var Type|null
      */
-    public $type;
+    public ?Type $type = null;
 
     /**
      * The first line of the declaration, for use in textDocument/hover
-     *
-     * @var string
      */
-    public $declarationLine;
+    public string $declarationLine;
 
     /**
      * A documentation string, for use in textDocument/hover
-     *
-     * @var string
      */
-    public $documentation;
+    public ?string $documentation = null;
 
     /**
      * Signature information if this definition is for a FunctionLike, for use in textDocument/signatureHelp
-     *
-     * @var SignatureInformation
      */
-    public $signatureInformation;
+    public ?SignatureInformation $signatureInformation = null;
 
     /**
      * Yields the definitons of all ancestor classes (the Definition fqn is yielded as key)
      *
      * @param ReadableIndex $index the index to search for needed definitions
      * @param bool $includeSelf should the first yielded value be the current definition itself
-     * @return Generator
      */
     public function getAncestorDefinitions(ReadableIndex $index, bool $includeSelf = false): Generator
     {

@@ -13,14 +13,8 @@ use Webmozart\Glob\Glob;
  */
 class ClientFilesFinder implements FilesFinder
 {
-    /**
-     * @var LanguageClient
-     */
-    private $client;
+    private LanguageClient $client;
 
-    /**
-     * @param LanguageClient $client
-     */
     public function __construct(LanguageClient $client)
     {
         $this->client = $client;
@@ -30,8 +24,7 @@ class ClientFilesFinder implements FilesFinder
      * Returns all files in the workspace that match a glob.
      * If the client does not support workspace/files, it falls back to searching the file system directly.
      *
-     * @param string $glob
-     * @return Promise <string[]> The URIs
+     * @return Promise<string[]> The URIs
      */
     public function find(string $glob): Promise
     {

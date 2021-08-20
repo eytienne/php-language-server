@@ -16,6 +16,8 @@ use LanguageServerProtocol\{
     Location
 };
 use Sabre\Event\Promise;
+use stdClass;
+
 use function Sabre\Event\coroutine;
 use function LanguageServer\waitForEvent;
 
@@ -24,55 +26,41 @@ use function LanguageServer\waitForEvent;
  */
 class Workspace
 {
-    /**
-     * @var LanguageClient
-     */
-    public $client;
+    public LanguageClient $client;
 
     /**
      * The symbol index for the workspace
-     *
-     * @var ProjectIndex
      */
-    private $projectIndex;
+    private ProjectIndex $projectIndex;
 
-    /**
-     * @var DependenciesIndex
-     */
-    private $dependenciesIndex;
+    private DependenciesIndex $dependenciesIndex;
 
-    /**
-     * @var Index
-     */
-    private $sourceIndex;
+    private Index $sourceIndex;
 
-    /**
-     * @var \stdClass
-     */
-    public $composerLock;
+    public ?stdClass $composerJson;
 
-    /**
-     * @var PhpDocumentLoader
-     */
-    public $documentLoader;
+    public ?stdClass $composerLock;
+
+    public PhpDocumentLoader $documentLoader;
 
     /**
      * @param LanguageClient    $client            LanguageClient instance used to signal updated results
      * @param ProjectIndex      $projectIndex      Index that is used to wait for full index completeness
      * @param DependenciesIndex $dependenciesIndex Index that is used on a workspace/xreferences request
      * @param DependenciesIndex $sourceIndex       Index that is used on a workspace/xreferences request
-     * @param \stdClass         $composerLock      The parsed composer.lock of the project, if any
      * @param PhpDocumentLoader $documentLoader    PhpDocumentLoader instance to load documents
+     * @param \stdClass         $composerJson      The parsed composer.json of the project, if any
+     * @param \stdClass         $composerLock      The parsed composer.lock of the project, if any
      */
-    public function __construct(LanguageClient $client, ProjectIndex $projectIndex, DependenciesIndex $dependenciesIndex, Index $sourceIndex, \stdClass $composerLock = null, PhpDocumentLoader $documentLoader, \stdClass $composerJson = null)
+    public function __construct(LanguageClient $client, ProjectIndex $projectIndex, DependenciesIndex $dependenciesIndex, Index $sourceIndex, PhpDocumentLoader $documentLoader, \stdClass $composerJson = null, \stdClass $composerLock = null)
     {
         $this->client = $client;
         $this->sourceIndex = $sourceIndex;
         $this->projectIndex = $projectIndex;
         $this->dependenciesIndex = $dependenciesIndex;
-        $this->composerLock = $composerLock;
         $this->documentLoader = $documentLoader;
         $this->composerJson = $composerJson;
+        $this->composerLock = $composerLock;
     }
 
     /**
@@ -134,7 +122,7 @@ class Workspace
             /** Map from URI to array of referenced FQNs in dependencies */
             $refs = [];
             // Get all references TO dependencies
-            $fqns = isset($query->fqsen) ? [$query->fqsen] : array_values($this->dependenciesIndex->getDefinitions());
+            $fqns = isset($query->fqsen) ? [$query->fqsen] : array_values(yield $this->dependenciesIndex->getDefinitions());
             foreach ($fqns as $fqn) {
                 foreach ($this->sourceIndex->getReferenceUris($fqn) as $uri) {
                     if (!isset($refs[$uri])) {

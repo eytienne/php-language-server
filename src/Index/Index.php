@@ -28,9 +28,9 @@ class Index implements ReadableIndex, \Serializable
      *     ],
      * ]
      *
-     * @var array
+     * @var array<string, Definition>
      */
-    private $definitions = [];
+    private array $definitions = [];
 
     /**
      * An associative array that maps fully qualified symbol names
@@ -38,22 +38,14 @@ class Index implements ReadableIndex, \Serializable
      *
      * @var string[][]
      */
-    private $references = [];
+    private array $references = [];
 
-    /**
-     * @var bool
-     */
-    private $complete = false;
+    private bool $complete = false;
 
-    /**
-     * @var bool
-     */
-    private $staticComplete = false;
+    private bool $staticComplete = false;
 
     /**
      * Marks this index as complete
-     *
-     * @return void
      */
     public function setComplete()
     {
@@ -66,8 +58,6 @@ class Index implements ReadableIndex, \Serializable
 
     /**
      * Marks this index as complete for static definitions and references
-     *
-     * @return void
      */
     public function setStaticComplete()
     {
@@ -75,21 +65,11 @@ class Index implements ReadableIndex, \Serializable
         $this->emit('static-complete');
     }
 
-    /**
-     * Returns true if this index is complete
-     *
-     * @return bool
-     */
     public function isComplete(): bool
     {
         return $this->complete;
     }
 
-    /**
-     * Returns true if this index is complete
-     *
-     * @return bool
-     */
     public function isStaticComplete(): bool
     {
         return $this->staticComplete;
@@ -109,7 +89,6 @@ class Index implements ReadableIndex, \Serializable
     /**
      * Returns a Generator that yields all the direct child Definitions of a given FQN
      *
-     * @param string $fqn
      * @return \Generator yields Definition
      */
     public function getChildDefinitionsForFqn(string $fqn): \Generator
@@ -143,7 +122,6 @@ class Index implements ReadableIndex, \Serializable
      *
      * @param string $fqn
      * @param bool $globalFallback Whether to fallback to global if the namespaced FQN was not found
-     * @return Definition|null
      */
     public function getDefinition(string $fqn, bool $globalFallback = false)
     {
@@ -167,7 +145,6 @@ class Index implements ReadableIndex, \Serializable
      *
      * @param string $fqn The fully qualified name of the symbol
      * @param Definition $definition The Definition object
-     * @return void
      */
     public function setDefinition(string $fqn, Definition $definition)
     {
@@ -182,7 +159,6 @@ class Index implements ReadableIndex, \Serializable
      * and removes all references pointing to that symbol
      *
      * @param string $fqn The fully qualified name of the symbol
-     * @return void
      */
     public function removeDefinition(string $fqn)
     {
@@ -220,7 +196,6 @@ class Index implements ReadableIndex, \Serializable
      * Adds a document URI as a referencee of a specific symbol
      *
      * @param string $fqn The fully qualified name of the symbol
-     * @return void
      */
     public function addReferenceUri(string $fqn, string $uri)
     {
@@ -238,7 +213,6 @@ class Index implements ReadableIndex, \Serializable
      *
      * @param string $fqn The fully qualified name of the symbol
      * @param string $uri The URI
-     * @return void
      */
     public function removeReferenceUri(string $fqn, string $uri)
     {
@@ -252,10 +226,6 @@ class Index implements ReadableIndex, \Serializable
         array_splice($this->references[$fqn], $index, 1);
     }
 
-    /**
-     * @param string $serialized
-     * @return void
-     */
     public function unserialize($serialized)
     {
         $data = unserialize($serialized);
@@ -273,9 +243,6 @@ class Index implements ReadableIndex, \Serializable
         }
     }
 
-    /**
-     * @return string
-     */
     public function serialize()
     {
         return serialize([
@@ -290,10 +257,6 @@ class Index implements ReadableIndex, \Serializable
      * Returns a Generator that yields all the Definitions in the given $storage recursively.
      * The generator yields key => value pairs, e.g.
      * `'Psr\Log\LoggerInterface->log()' => $definition`
-     *
-     * @param array &$storage
-     * @param string $prefix (optional)
-     * @return \Generator
      */
     private function yieldDefinitionsRecursively(array &$storage, string $prefix = ''): \Generator
     {
@@ -312,7 +275,6 @@ class Index implements ReadableIndex, \Serializable
      * - `'\Exception->getMessage()'`     will be `['\Exception', '->getMessage()']`
      * - `'PHP_VERSION'`                  will be `['PHP_VERSION']`
      *
-     * @param string $fqn
      * @return string[]
      */
     private function splitFqn(string $fqn): array

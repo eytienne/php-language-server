@@ -29,7 +29,7 @@ class LanguageServerTest extends TestCase
     public function testInitialize()
     {
         $server = new LanguageServer(new MockProtocolStream, new MockProtocolStream);
-        $result = $server->initialize(new ClientCapabilities, __DIR__, getmypid())->wait();
+        $result = $server->initialize(new ClientCapabilities, __DIR__)->wait();
 
         $serverCapabilities = new ServerCapabilities();
         $serverCapabilities->textDocumentSync = TextDocumentSyncKind::FULL;
@@ -66,8 +66,9 @@ class LanguageServerTest extends TestCase
         });
         $server = new LanguageServer($input, $output);
         $capabilities = new ClientCapabilities;
-        $server->initialize($capabilities, realpath(__DIR__ . '/../fixtures'), getmypid());
+        $server->initialize($capabilities, realpath(__DIR__ . '/../fixtures'));
         $promise->wait();
+        $this->assertTrue(true, "ended without problem");
     }
 
     public function testIndexingWithFilesAndContentRequests()
@@ -114,7 +115,7 @@ class LanguageServerTest extends TestCase
         $capabilities = new ClientCapabilities;
         $capabilities->xfilesProvider = true;
         $capabilities->xcontentProvider = true;
-        $server->initialize($capabilities, $rootPath, getmypid());
+        $server->initialize($capabilities, $rootPath);
         $promise->wait();
         $this->assertTrue($filesCalled);
         $this->assertTrue($contentCalled);

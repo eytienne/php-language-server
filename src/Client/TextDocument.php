@@ -13,15 +13,9 @@ use JsonMapper;
  */
 class TextDocument
 {
-    /**
-     * @var ClientHandler
-     */
-    private $handler;
+    private ClientHandler $handler;
 
-    /**
-     * @var JsonMapper
-     */
-    private $mapper;
+    private JsonMapper $mapper;
 
     public function __construct(ClientHandler $handler, JsonMapper $mapper)
     {
@@ -34,7 +28,7 @@ class TextDocument
      *
      * @param string $uri
      * @param Diagnostic[] $diagnostics
-     * @return Promise <void>
+     * @return Promise<void>
      */
     public function publishDiagnostics(string $uri, array $diagnostics): Promise
     {
@@ -49,7 +43,7 @@ class TextDocument
      * to request the current content of a text document identified by the URI
      *
      * @param TextDocumentIdentifier $textDocument The document to get the content for
-     * @return Promise <TextDocumentItem> The document's current content
+     * @return Promise<TextDocumentItem> The document's current content
      */
     public function xcontent(TextDocumentIdentifier $textDocument): Promise
     {

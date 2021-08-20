@@ -8,45 +8,32 @@ use LanguageServerProtocol\{Diagnostic, DiagnosticSeverity, Range, Position};
 use phpDocumentor\Reflection\DocBlockFactory;
 use Microsoft\PhpParser;
 use Microsoft\PhpParser\Node;
+use Microsoft\PhpParser\Node\SourceFileNode;
+use Microsoft\PhpParser\Node\Statement\ClassDeclaration;
+use Microsoft\PhpParser\Parser;
 use Microsoft\PhpParser\Token;
 
 class TreeAnalyzer
 {
-    /** @var PhpParser\Parser */
-    private $parser;
+    private Parser $parser;
 
-    /** @var DocBlockFactory */
-    private $docBlockFactory;
+    private DefinitionResolver $definitionResolver;
 
-    /** @var DefinitionResolver */
-    private $definitionResolver;
-
-    /** @var Node\SourceFileNode */
-    private $sourceFileNode;
+    private SourceFileNode $sourceFileNode;
 
     /** @var Diagnostic[] */
-    private $diagnostics;
-
-    /** @var string */
-    private $content;
+    private array $diagnostics;
 
     /** @var Node[] */
-    private $referenceNodes;
+    private array $referenceNodes;
 
     /** @var Definition[] */
-    private $definitions;
+    private array $definitions;
 
     /** @var Node[] */
-    private $definitionNodes;
+    private array $definitionNodes;
 
-    /**
-     * @param PhpParser\Parser $parser
-     * @param string $content
-     * @param DocBlockFactory $docBlockFactory
-     * @param DefinitionResolver $definitionResolver
-     * @param string $uri
-     */
-    public function __construct(PhpParser\Parser $parser, string $content, DocBlockFactory $docBlockFactory, DefinitionResolver $definitionResolver, string $uri)
+    public function __construct(Parser $parser, string $content, DocBlockFactory $docBlockFactory, DefinitionResolver $definitionResolver, string $uri)
     {
         $this->parser = $parser;
         $this->docBlockFactory = $docBlockFactory;
@@ -63,7 +50,6 @@ class TreeAnalyzer
      * and transforms them into LSP Format
      *
      * @param Node|Token $node
-     * @return void
      */
     private function collectDiagnostics($node)
     {
@@ -97,6 +83,7 @@ class TreeAnalyzer
         if ($node instanceof Node\Expression\Variable && $node->getName() === 'this') {
             // Find the first ancestor that's a class method. Return an error
             // if there is none, or if the method is static.
+            /** @var MethodDeclaration */
             $method = $node->getFirstAncestor(Node\MethodDeclaration::class);
             if ($method && $method->isStatic()) {
                 $this->diagnostics[] = new Diagnostic(
@@ -180,7 +167,8 @@ class TreeAnalyzer
             if ($fqn === 'self' || $fqn === 'static') {
                 // Resolve self and static keywords to the containing class
                 // (This is not 100% correct for static but better than nothing)
-                $classNode = $node->getFirstAncestor(Node\Statement\ClassDeclaration::class);
+                /** @var ClassDeclaration */
+                $classNode = $node->getFirstAncestor(ClassDeclaration::class);
                 if (!$classNode) {
                     return;
                 }
@@ -190,7 +178,8 @@ class TreeAnalyzer
                 }
             } else if ($fqn === 'parent') {
                 // Resolve parent keyword to the base class FQN
-                $classNode = $node->getFirstAncestor(Node\Statement\ClassDeclaration::class);
+                /** @var ClassDeclaration */
+                $classNode = $node->getFirstAncestor(ClassDeclaration::class);
                 if (!$classNode || !$classNode->classBaseClause || !$classNode->classBaseClause->baseClass) {
                     return;
                 }
