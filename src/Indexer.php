@@ -94,7 +94,7 @@ class Indexer
             $excludedUris = [];
             foreach ($this->exclude as $exclude) {
                 $pattern = Path::makeAbsolute($exclude, $this->rootPath);
-                if(!str_ends_with($pattern, ".php")) {
+                if (!str_ends_with($pattern, ".php")) {
                     $pattern = Path::makeAbsolute('**/*.php', $pattern);
                 }
                 $excludedUris[] = yield $this->filesFinder->find($pattern);

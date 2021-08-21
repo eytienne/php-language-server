@@ -136,8 +136,7 @@ class LanguageServer extends Dispatcher
         string $rootPath = null,
         string $rootUri = null,
         ?InitializationOptions $initializationOptions = null
-    ): Promise
-    {
+    ): Promise {
         /** @var InitializationOptions */
         $initializationOptions = (object) array_merge_recursive2((array) new InitializationOptions(), (array) $initializationOptions);
 

@@ -2,7 +2,8 @@
 
 namespace LanguageServer;
 
-class InitializationOptions {
+class InitializationOptions
+{
 
     /**
      * @var string[] Glob patterns to exclude from indexing.
