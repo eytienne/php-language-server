@@ -170,3 +170,29 @@ function getVendorDir(\stdClass $composerJson = null): string
 {
     return $composerJson->config->{'vendor-dir'} ?? 'vendor';
 }
+
+/**
+ * `array_merge_recursive2` is an alteration of `array_merge_recursive`. It is practical for
+ * merging configuration objects.
+ *
+ * `array_merge_recursive` does indeed merge arrays, but it converts values with duplicate
+ * keys to arrays rather than overwriting the value in the first array with the duplicate
+ * value in the second array, as array_merge does. So array_merge_recursive2 keeps this
+ * behaviour of overwriting non numeric-indexed values.
+ */
+function array_merge_recursive2(array $target, array ...$sources)
+{
+    foreach ($sources as $source) {
+        foreach ($source as $key => $value) {
+            if (is_numeric($key)) {
+                $target[] = $value;
+            } elseif (is_array($value) && isset($target[$key]) && is_array($target[$key])) {
+                $target[$key] = array_merge_recursive2($target[$key], $value);
+            } else {
+                $target[$key] = $value;
+            }
+        }
+    }
+
+    return $target;
+}

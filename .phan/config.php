@@ -205,7 +205,8 @@ return [
         'PhanTypeMismatchArgumentInternal',  // 2 occurence(s)
         'PhanUnextractableAnnotationElementName',  // 1 occurence(s)
         'PhanUndeclaredClassMethod',  // 1 occurence(s)
-        'PhanUndeclaredClassInstanceof',  // 1 occurence(s)
+        'PhanUndeclaredClassInstanceof',  // 1 occurence(s),
+        'PhanUndeclaredFunction', // 1 occurence(s),
         'PhanTypeSuspiciousNonTraversableForeach',  // 1 occurence(s)
         'PhanTypeMismatchDimAssignment',  // 1 occurence(s)
         'PhanTypeMismatchDeclaredParam',  // 1 occurence(s)
