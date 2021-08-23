@@ -23,7 +23,6 @@ use function LanguageServer\FqnUtilities\{
     nameConcat,
     nameGetFirstPart,
     nameGetParent,
-    nameStartsWith,
     nameWithoutFirstPart
 };
 
@@ -461,7 +460,7 @@ class CompletionProvider
             if ($requireCanBeInstantiated && !$def->canBeInstantiated) {
                 continue;
             }
-            if (!nameStartsWith($fqn, $prefix)) {
+            if (!str_starts_with($fqn, $prefix)) {
                 continue;
             }
             $completion = CompletionItemFactory::fromDefinition($def);
@@ -486,7 +485,7 @@ class CompletionProvider
         bool $requireCanBeInstantiated
     ): \Generator {
         foreach ($aliases as $alias => $aliasFqn) {
-            if (!nameStartsWith($alias, $prefix)) {
+            if (!str_starts_with($alias, $prefix)) {
                 continue;
             }
             $definition = $this->index->getDefinition((string)$aliasFqn);
@@ -539,7 +538,7 @@ class CompletionProvider
     private function getRoamedCompletions(string $prefix): \Generator
     {
         foreach ($this->index->getChildDefinitionsForFqn('') as $fqn => $def) {
-            if (!$def->roamed || !nameStartsWith($fqn, $prefix)) {
+            if (!$def->roamed || !str_starts_with($fqn, $prefix)) {
                 continue;
             }
             $completionItem = CompletionItemFactory::fromDefinition($def);
@@ -559,7 +558,7 @@ class CompletionProvider
     private function getCompletionsForKeywords(string $prefix): \Generator
     {
         foreach (self::KEYWORDS as $keyword) {
-            if (nameStartsWith($keyword, $prefix)) {
+            if (str_starts_with($keyword, $prefix)) {
                 $item = new CompletionItem($keyword, CompletionItemKind::KEYWORD);
                 $item->insertText = $keyword;
                 yield $keyword => $item;
