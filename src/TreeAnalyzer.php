@@ -154,7 +154,7 @@ class TreeAnalyzer
                         $node->parent instanceof Node\Expression\CallExpression ||
                         $node->memberName instanceof PhpParser\Token
                     ))
-                || ($parent instanceof Node\Statement\NamespaceDefinition && $parent->name !== null && $parent->name->getStart() === $node->getStart())
+                || ($parent instanceof Node\Statement\NamespaceDefinition && $parent->name !== null && $parent->name->getStartPosition() === $node->getStartPosition())
             ) {
                 return;
             }
@@ -194,7 +194,7 @@ class TreeAnalyzer
             if (
                 $node instanceof Node\QualifiedName
                 && ($node->isQualifiedName() || $node->parent instanceof Node\NamespaceUseClause)
-                && !($parent instanceof Node\Statement\NamespaceDefinition && $parent->name->getStart() === $node->getStart()
+                && !($parent instanceof Node\Statement\NamespaceDefinition && $parent->name->getStartPosition() === $node->getStartPosition()
                 )
             ) {
                 // Add references for each referenced namespace

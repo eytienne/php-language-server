@@ -185,7 +185,7 @@ class PhpDocument
 
         $offset = $position->toOffset($this->sourceFileNode->getFileContents());
         $node = $this->sourceFileNode->getDescendantNodeAtPosition($offset);
-        if ($node !== null && $node->getStart() > $offset) {
+        if ($node !== null && $node->getStartPosition() > $offset) {
             return null;
         }
         return $node;

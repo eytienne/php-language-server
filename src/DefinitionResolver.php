@@ -9,16 +9,19 @@ use LanguageServerProtocol\SymbolInformation;
 use Microsoft\PhpParser;
 use Microsoft\PhpParser\Node;
 use Microsoft\PhpParser\FunctionLike;
+use Microsoft\PhpParser\MissingToken;
 use Microsoft\PhpParser\Node\DelimitedList\ParameterDeclarationList;
 use Microsoft\PhpParser\Node\Expression\Variable;
 use Microsoft\PhpParser\Node\QualifiedName;
 use Microsoft\PhpParser\Node\Statement\ClassDeclaration;
+use Microsoft\PhpParser\Node\Statement\FunctionDeclaration;
 use Microsoft\PhpParser\Token;
 use phpDocumentor\Reflection\{
     DocBlock, DocBlockFactory, Fqsen, Type, TypeResolver, Types
 };
 
 use function LanguageServer\ParserHelpers\isConstantFetch;
+use function LanguageServer\array_any;
 
 class DefinitionResolver
 {
@@ -63,12 +66,12 @@ class DefinitionResolver
             ($declaration = ParserHelpers\tryGetConstOrClassConstDeclaration($node)) && ($elements = $declaration->constElements)
         ) {
             $defLine = $declaration->getText();
-            $defLineStart = $declaration->getStart();
+            $defLineStart = $declaration->getStartPosition();
 
             $defLine = \substr_replace(
                 $defLine,
                 $node->getFullText(),
-                $elements->getFullStart() - $defLineStart,
+                $elements->getFullStartPosition() - $defLineStart,
                 $elements->getFullWidth()
             );
         } else {
@@ -736,12 +739,12 @@ class DefinitionResolver
             if ($expr->memberName instanceof Node\Expression) {
                 return new Types\Mixed_;
             }
-            $var = $expr->dereferencableExpression;
 
+            $variable = $expr->dereferencableExpression;
            // Resolve object
-            $objType = $this->resolveExpressionNodeToType($var);
+            $objType = $this->resolveExpressionNodeToType($variable);
             if (!($objType instanceof Types\Compound)) {
-                $objType = new Types\Compound([$objType]);
+                $objType = new Types\Compound($objType ? [$objType] : []);
             }
             for ($i = 0; $t = $objType->get($i); $i++) {
                 if ($t instanceof Types\This) {
@@ -1081,26 +1084,30 @@ class DefinitionResolver
                 return $type;
             }
 
+            /** @var Type[] */
+            $typeDeclarations = [];
             // function foo(MyClass $a)
-            if ($node->typeDeclaration !== null) {
-                // Use PHP7 return type hint
-                if ($node->typeDeclaration instanceof PhpParser\Token) {
-                    // Resolve a string like "bool" to a type object
-                    $type = $this->typeResolver->resolve($node->typeDeclaration->getText($node->getFileContents()));
-                } else {
-                    $type = new Types\Object_(new Fqsen('\\' . (string)$node->typeDeclaration->getResolvedName()));
+            if ($node->typeDeclarationList !== null && !($node->typeDeclarationList instanceof MissingToken)) {
+                foreach ($node->typeDeclarationList->children as $typeDeclaration) {
+                    if ($typeDeclaration instanceof PhpParser\Token) {
+                        // Resolve a string like "bool" to a type object
+                        $typeDeclarations[] = $this->typeResolver->resolve($typeDeclaration->getText($node->getFileContents()));
+                    } elseif ($typeDeclaration instanceof QualifiedName) {
+                        $typeDeclarations[] = new Types\Object_(new Fqsen('\\' . (string)$typeDeclaration->getResolvedName()));
+                    }
                 }
             }
             // function foo($a = 3)
             if ($node->default !== null) {
                 $defaultType = $this->resolveExpressionNodeToType($node->default);
-                if (isset($type) && !is_a($type, get_class($defaultType))) {
-                    // TODO - verify it is worth creating a compound type
-                    return new Types\Compound([$type, $defaultType]);
+                if ($defaultType && !array_any($typeDeclarations, fn($type) => is_a($type, get_class($defaultType)))) {
+                    $typeDeclarations[] = $defaultType;
                 }
-                $type = $defaultType;
             }
-            return $type ?? new Types\Mixed_;
+            if ($typeDeclarations) {
+                return count($typeDeclarations) > 1 ? new Types\Compound($typeDeclarations) : $typeDeclarations[0];
+            }
+            return new Types\Mixed_;
         }
 
         // FUNCTIONS AND METHODS
@@ -1108,7 +1115,8 @@ class DefinitionResolver
         //   1. doc block
         //   2. return type hint
         //   3. TODO: infer from return statements
-        if ($node instanceof PhpParser\FunctionLike) {
+        if ($node instanceof FunctionLike) {
+            /** @var FunctionDeclaration $node Sub-typing to get autocompletion of FunctionReturnType */
             // Functions/methods
             $docBlock = $this->getDocBlock($node);
             if (
@@ -1126,18 +1134,26 @@ class DefinitionResolver
                 }
                 return $returnType;
             }
-            if ($node->returnType !== null && !($node->returnType instanceof PhpParser\MissingToken)) {
-                // Use PHP7 return type hint
-                if ($node->returnType instanceof PhpParser\Token) {
-                    // Resolve a string like "bool" to a type object
-                    return $this->typeResolver->resolve($node->returnType->getText($node->getFileContents()));
-                } elseif ($node->returnType->getResolvedName() === 'self') {
-                    $selfType = $this->getContainingClassType($node);
-                    if ($selfType !== null) {
-                        return $selfType;
+            if ($node->returnTypeList !== null && !array_any($node->returnTypeList->children, fn($node) => $node instanceof MissingToken)) {
+                /** @var Type[] */
+                $returnTypes = [];
+                foreach ($node->returnTypeList->children as $tokenode) {
+                    if ($tokenode instanceof PhpParser\Token) {
+                        // Resolve a string like "bool" to a type object
+                        $returnTypes[] = $this->typeResolver->resolve($tokenode->getText($node->getFileContents()));
+                    } elseif ($tokenode instanceof QualifiedName) {
+                        if ($tokenode->getResolvedName() === 'self') {
+
+                            $selfType = $this->getContainingClassType($node);
+                            if ($selfType !== null) {
+                                $returnTypes[] = $selfType;
+                            }
+                        } else {
+                            $returnTypes[] = new Types\Object_(new Fqsen('\\' . (string)$tokenode->getResolvedName()));
+                        }
                     }
                 }
-                return new Types\Object_(new Fqsen('\\' . (string)$node->returnType->getResolvedName()));
+                return count($returnTypes) > 1 ? new Types\Compound($returnTypes) : $returnTypes[0];
             }
             // Unknown return type
             return new Types\Mixed_;

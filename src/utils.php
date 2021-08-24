@@ -3,6 +3,7 @@ declare(strict_types = 1);
 
 namespace LanguageServer;
 
+use Closure;
 use Throwable;
 use InvalidArgumentException;
 use Sabre\Event\{Loop, Promise, EmitterInterface};
@@ -195,4 +196,18 @@ function array_merge_recursive2(array $target, array ...$sources)
     }
 
     return $target;
+}
+
+/**
+ * @param array $array
+ * @param Closure $callback Takes `($value, $key)` and returns `bool`.
+ */
+function array_any(array $array, Closure $callback = null)
+{
+    foreach ($array as $key => $value) {
+        if ($callback ? $callback($value, $key) : $value) {
+            return true;
+        }
+    }
+    return false;
 }

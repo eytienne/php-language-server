@@ -9,7 +9,8 @@
  */
 return [
     // # Issue statistics:
-    // PhanTypeArraySuspiciousNullable : 3 occurrences
+    // PhanTypeArraySuspiciousNullable : 2 occurrences
+    // PhanCompatibleSerializeInterfaceDeprecated : 1 occurrence
     // PhanNoopNew : 1 occurrence
     // PhanPossiblyUndeclaredVariable : 1 occurrence
     // PhanTypePossiblyInvalidDimOffset : 1 occurrence
@@ -18,6 +19,7 @@ return [
     'file_suppressions' => [
         'src/ComposerScripts.php' => ['PhanNoopNew'],
         'src/DefinitionResolver.php' => ['PhanPossiblyUndeclaredVariable', 'PhanTypeArraySuspiciousNullable'],
+        'src/Index/Index.php' => ['PhanCompatibleSerializeInterfaceDeprecated'],
         'src/utils.php' => ['PhanTypePossiblyInvalidDimOffset'],
     ],
     // 'directory_suppressions' => ['src/directory_name' => ['PhanIssueName1', 'PhanIssueName2']] can be manually added if needed.

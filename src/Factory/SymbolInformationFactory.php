@@ -8,6 +8,7 @@ use LanguageServerProtocol\SymbolKind;
 use Microsoft\PhpParser\Node;
 use Microsoft\PhpParser\ResolvedName;
 use LanguageServer\Factory\LocationFactory;
+use Microsoft\PhpParser\Token;
 
 class SymbolInformationFactory
 {
@@ -57,13 +58,14 @@ class SymbolInformationFactory
         ) {
             $symbol->kind = SymbolKind::VARIABLE;
         } else {
+            // not supported otherwise
             return null;
         }
-
+        /** @var Node $node */
         if ($node instanceof Node\Expression\AssignmentExpression) {
             if ($node->leftOperand instanceof Node\Expression\Variable) {
                 $symbol->name = $node->leftOperand->getName();
-            } elseif ($node->leftOperand instanceof PhpParser\Token) {
+            } elseif ($node->leftOperand instanceof Token) {
                 $symbol->name = trim($node->leftOperand->getText($node->getFileContents()), "$");
             }
         } else if ($node instanceof Node\UseVariableName) {
@@ -75,7 +77,7 @@ class SymbolInformationFactory
                 $symbol->name = ltrim((string)$node->name->getText($node->getFileContents()), "$");
             }
         } else if (isset($node->variableName)) {
-            $symbol->name = $node->variableName->getText($node);
+            $symbol->name = $node->variableName->getText($node->getFileContents());
         } else if (!isset($symbol->name)) {
             return null;
         }
