@@ -193,6 +193,7 @@ return [
         'PhanTypeMismatchArgument',  // 21 occurence(s)
         'PhanTypeMismatchProperty',  // 13 occurence(s)
         'PhanUnreferencedUseNormal',  // 10 occurence(s) TODO: Fix
+        'PhanTypeMismatchArgumentProbablyReal', // 8 occurences(s)
         'PhanTypeMismatchDeclaredReturn',  // 8 occurence(s)
         'PhanUndeclaredTypeProperty',  // 7 occurence(s)
         'PhanTypeMismatchReturn',  // 6 occurence(s)

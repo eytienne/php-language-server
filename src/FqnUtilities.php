@@ -105,14 +105,3 @@ function nameWithoutFirstPart(string $name): string
     array_shift($parts);
     return implode('\\', $parts);
 }
-
-/**
- * @param string $name Name to match against
- * @param string $prefix Prefix $name has to starts with
- * @return bool
- */
-function nameStartsWith(string $name, string $prefix): bool
-{
-    return strlen($name) >= strlen($prefix)
-        && strncmp($name, $prefix, strlen($prefix)) === 0;
-}

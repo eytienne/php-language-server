@@ -156,7 +156,7 @@ class SignatureHelpProvider
         $found = null;
         foreach ($args as $arg) {
             if ($arg instanceof Node) {
-                $start = $arg->getFullStart();
+                $start = $arg->getFullStartPosition();
                 $end = $arg->getEndPosition();
             } else {
                 $start = $arg->fullStart;
