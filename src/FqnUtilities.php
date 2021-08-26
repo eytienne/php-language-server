@@ -30,44 +30,26 @@ function getFqnsFromType($type): array
 }
 
 /**
- * Returns parent of an FQN.
+ * Concatenates two names (joining them with a `\\`).
  *
- * getFqnParent('') === ''
- * getFqnParent('\\') === ''
- * getFqnParent('\A') === ''
- * getFqnParent('A') === ''
- * getFqnParent('\A\') === '\A' // Empty trailing name is considered a name.
- *
- * @return string
- */
-function nameGetParent(string $name): string
-{
-    if ($name === '') { // Special-case handling for the root namespace.
-        return '';
-    }
-    $parts = explode('\\', $name);
-    array_pop($parts);
-    return implode('\\', $parts);
-}
-
-/**
- * Concatenates two names.
- *
- * nameConcat('\Foo\Bar', 'Baz') === '\Foo\Bar\Baz'
- * nameConcat('\Foo\Bar\\', '\Baz') === '\Foo\Bar\Baz'
- * nameConcat('\\', 'Baz') === '\Baz'
- * nameConcat('', 'Baz') === 'Baz'
+ * nameConcat('Foo\\Bar', 'Baz') === 'Foo\\Bar\\Baz'
+ * nameConcat('Foo\\Bar\\', '\\Baz') === 'Foo\\Bar\\Baz'
+ * nameConcat('\\Foo\\Bar', '\\Baz') === 'Foo\\Bar\\Baz'
  *
  * @return string
  */
 function nameConcat(string $a, string $b): string
 {
-    if ($a === '') {
+    $a = normalize($a);
+    $b = normalize($b);
+    if($a === '') {
         return $b;
     }
-    $a = rtrim($a, '\\');
-    $b = ltrim($b, '\\');
     return "$a\\$b";
+}
+
+function normalize($name) {
+    return trim($name, "\\");
 }
 
 /**
@@ -86,22 +68,4 @@ function nameGetFirstPart(string $name): string
     } else {
         return $parts[0];
     }
-}
-
-/**
- * Removes the first component of $name.
- *
- * nameWithoutFirstPart('Foo\Bar') === 'Bar'
- * nameWithoutFirstPart('\Foo\Bar') === 'Bar'
- * nameWithoutFirstPart('') === ''
- * nameWithoutFirstPart('\') === ''
- */
-function nameWithoutFirstPart(string $name): string
-{
-    $parts = explode('\\', $name, 3);
-    if ($parts[0] === '') {
-        array_shift($parts);
-    }
-    array_shift($parts);
-    return implode('\\', $parts);
 }

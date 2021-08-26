@@ -61,7 +61,7 @@ class SymbolInformationFactory
             // not supported otherwise
             return null;
         }
-        /** @var Node $node */
+        /** @var Node $node For IDE to avoid `never` */
         if ($node instanceof Node\Expression\AssignmentExpression) {
             if ($node->leftOperand instanceof Node\Expression\Variable) {
                 $symbol->name = $node->leftOperand->getName();

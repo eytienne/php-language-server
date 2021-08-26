@@ -6,6 +6,9 @@ namespace LanguageServer\Index;
 use LanguageServer\Definition;
 use Sabre\Event\EmitterTrait;
 
+use function LanguageServer\FqnUtilities\nameConcat;
+use function LanguageServer\FqnUtilities\normalize;
+
 /**
  * Represents the index of a project or dependency
  * Serializable for caching
@@ -14,6 +17,7 @@ class Index implements ReadableIndex, \Serializable
 {
     use EmitterTrait;
 
+    const MEMBER_REGEX = '/((?:->|::).+)$/';
     /**
      * An associative array that maps splitted fully qualified symbol names
      * to definitions, eg :
@@ -28,7 +32,7 @@ class Index implements ReadableIndex, \Serializable
      *     ],
      * ]
      *
-     * @var array<string, Definition>
+     * @var array<string, Definition|Definition[]>
      */
     private array $definitions = [];
 
@@ -79,7 +83,7 @@ class Index implements ReadableIndex, \Serializable
      * Returns a Generator providing an associative array [string => Definition]
      * that maps fully qualified symbol names to Definitions (global or not)
      *
-     * @return \Generator yields Definition
+     * @return \Generator|Definition[]
      */
     public function getDefinitions(): \Generator
     {
@@ -89,18 +93,18 @@ class Index implements ReadableIndex, \Serializable
     /**
      * Returns a Generator that yields all the direct child Definitions of a given FQN
      *
-     * @return \Generator yields Definition
+     * @return \Generator|Definition[]
      */
     public function getChildDefinitionsForFqn(string $fqn): \Generator
     {
-        $parts = $this->splitFqn($fqn);
+        $parts = $this->splitFqn(normalize($fqn));
         if ('' === end($parts)) {
             // we want to return all the definitions in the given FQN, not only
             // the one (non member) matching exactly the FQN.
             array_pop($parts);
         }
 
-        $result = $this->getIndexValue($parts, $this->definitions);
+        $result = $this->getIndexValue($parts);
         if (!$result) {
             return;
         }
@@ -110,9 +114,12 @@ class Index implements ReadableIndex, \Serializable
                 continue;
             }
             if ($item instanceof Definition) {
-                yield $fqn.$name => $item;
+                $yielded = $item;
             } elseif (is_array($item) && isset($item[''])) {
-                yield $fqn.$name => $item[''];
+                $yielded = $item[''];
+            }
+            if (isset($yielded)) {
+                yield (preg_match(self::MEMBER_REGEX, $name) ? $fqn.$name : nameConcat($fqn, $name)) => $yielded;
             }
         }
     }
@@ -126,17 +133,16 @@ class Index implements ReadableIndex, \Serializable
     public function getDefinition(string $fqn, bool $globalFallback = false)
     {
         $parts = $this->splitFqn($fqn);
-        $result = $this->getIndexValue($parts, $this->definitions);
+        $definition = $this->getIndexValue($parts);
 
-        if ($result instanceof Definition) {
-            return $result;
+        if ($definition instanceof Definition) {
+            return $definition;
         }
 
         if ($globalFallback) {
             $parts = explode('\\', $fqn);
-            $fqn = end($parts);
-
-            return $this->getDefinition($fqn);
+            $nonNamespacedPortion = end($parts);
+            return $this->getDefinition($nonNamespacedPortion);
         }
     }
 
@@ -149,7 +155,16 @@ class Index implements ReadableIndex, \Serializable
     public function setDefinition(string $fqn, Definition $definition)
     {
         $parts = $this->splitFqn($fqn);
-        $this->indexDefinition(0, $parts, $this->definitions, $definition);
+
+        $storage =& $this->definitions;
+        foreach ($parts as $part) {
+            if($part === end($parts)) {
+                $storage[$part] = $definition;
+                break;
+            }
+            $storage[$part] ??= [];
+            $storage =& $storage[$part];
+        }
 
         $this->emit('definition-added');
     }
@@ -172,7 +187,7 @@ class Index implements ReadableIndex, \Serializable
      * Returns a Generator providing all URIs in this index that reference a symbol
      *
      * @param string $fqn The fully qualified name of the symbol
-     * @return \Generator yields string
+     * @return \Generator|string[]
      */
     public function getReferenceUris(string $fqn): \Generator
     {
@@ -271,52 +286,26 @@ class Index implements ReadableIndex, \Serializable
 
     /**
      * Splits the given FQN into an array, eg :
-     * - `'Psr\Log\LoggerInterface->log'` will be `['Psr', '\Log', '\LoggerInterface', '->log()']`
-     * - `'\Exception->getMessage()'`     will be `['\Exception', '->getMessage()']`
-     * - `'PHP_VERSION'`                  will be `['PHP_VERSION']`
+     * - `'\\Psr\\Log\\LoggerInterface'` will be `['Psr', 'Log', 'LoggerInterface', '']` with a terminal empty string for the leaf without member
+     * - `'\\Psr\\Log\\LoggerInterface->log()'` will be `['Psr', 'Log', 'LoggerInterface', '->log()']` with a terminal string for the leaf member
+     * - `'PHP_VERSION'` will be `['PHP_VERSION']`
      *
      * @return string[]
      */
     private function splitFqn(string $fqn): array
     {
-        // split fqn at backslashes
-        $parts = explode('\\', $fqn);
-
-        // write back the backslash prefix to the first part if it was present
-        if ('' === $parts[0] && count($parts) > 1) {
-            $parts = array_slice($parts, 1);
-            $parts[0] = '\\' . $parts[0];
-        }
-
-        // write back the backslashes prefixes for the other parts
-        for ($i = 1; $i < count($parts); $i++) {
-            $parts[$i] = '\\' . $parts[$i];
-        }
-
-        // split the last part in 2 parts at the operator
-        $hasOperator = false;
-        $lastPart = end($parts);
-        foreach (['::', '->'] as $operator) {
-            $endParts = explode($operator, $lastPart);
-            if (count($endParts) > 1) {
-                $hasOperator = true;
-                // replace the last part by its pieces
-                array_pop($parts);
-                $parts[] = $endParts[0];
-                $parts[] = $operator . $endParts[1];
-                break;
+        // array_filter avoid [''] when fqn is global namespace
+        $parts = array_filter(explode('\\', normalize($fqn)));
+        if ($parts) { // empty when "global namespace"
+            $lastPart = array_pop($parts);
+            // split the last part in 2 parts at the operator
+            if(preg_match(self::MEMBER_REGEX, $lastPart, $matches)) {
+                $parts[] = str_replace($matches[0], '', $lastPart);
+                $parts[] = $matches[0];
+            } else {
+                $parts[] = $lastPart;
+                $parts[] = '';
             }
-        }
-
-        // The end($parts) === '' holds for the root namespace.
-        if (!$hasOperator && end($parts) !== '') {
-            // add an empty part to store the non-member definition to avoid
-            // definition collisions in the index array, eg
-            // 'Psr\Log\LoggerInterface' will be stored at
-            // ['Psr']['\Log']['\LoggerInterface'][''] to be able to also store
-            // member definitions, ie 'Psr\Log\LoggerInterface->log()' will be
-            // stored at ['Psr']['\Log']['\LoggerInterface']['->log()']
-            $parts[] = '';
         }
 
         return $parts;
@@ -327,50 +316,23 @@ class Index implements ReadableIndex, \Serializable
      * It can be an index node or a Definition if the $parts are precise
      * enough. Returns null when nothing is found.
      *
-     * @param string[] $path              The splitted FQN
-     * @param array|Definition &$storage  The current level to look for $path.
-     * @return array|Definition|null
+     * @param string[] $parts              The splitted FQN
      */
-    private function getIndexValue(array $path, &$storage)
+    private function getIndexValue(array $parts)
     {
-        // Empty path returns the object itself.
-        if (empty($path)) {
-            return $storage;
+        $return = $storage = $this->definitions;
+        foreach ($parts as $part) {
+            /** @var Definition|Definition[] */
+            $stored = $storage[$part] ?? null;
+            if($stored === null) {
+                return null;
+            } elseif (is_array($stored)) {
+                $return = $storage = $stored;
+            } else {
+                $return = $stored;
+            }
         }
-
-        $part = array_shift($path);
-
-        if (!isset($storage[$part])) {
-            return null;
-        }
-
-        return $this->getIndexValue($path, $storage[$part]);
-    }
-
-    /**
-     * Recursive function that stores the given Definition in the given $storage array represented
-     * as a tree matching the given $parts.
-     *
-     * @param int $level              The current level of FQN part
-     * @param string[] $parts         The splitted FQN
-     * @param array &$storage         The array in which to store the $definition
-     * @param Definition $definition  The Definition to store
-     */
-    private function indexDefinition(int $level, array $parts, array &$storage, Definition $definition)
-    {
-        $part = $parts[$level];
-
-        if ($level + 1 === count($parts)) {
-            $storage[$part] = $definition;
-
-            return;
-        }
-
-        if (!isset($storage[$part])) {
-            $storage[$part] = [];
-        }
-
-        $this->indexDefinition($level + 1, $parts, $storage[$part], $definition);
+        return $return;
     }
 
     /**

@@ -137,7 +137,7 @@ class TreeAnalyzer
      */
     private function collectDefinitionsAndReferences(Node $node)
     {
-        $fqn = ($this->definitionResolver)::getDefinedFqn($node);
+        $fqn = DefinitionResolver::getDefinedFqn($node);
         // Only index definitions with an FQN (no variables)
         if ($fqn !== null) {
             $this->definitionNodes[$fqn] = $node;

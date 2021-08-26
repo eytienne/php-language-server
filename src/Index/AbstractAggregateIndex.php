@@ -102,7 +102,7 @@ abstract class AbstractAggregateIndex implements ReadableIndex
      * Returns a Generator providing an associative array [string => Definition]
      * that maps fully qualified symbol names to Definitions (global or not)
      *
-     * @return \Generator yields Definition
+     * @return \Generator|Definition[]
      */
     public function getDefinitions(): \Generator
     {
@@ -115,7 +115,7 @@ abstract class AbstractAggregateIndex implements ReadableIndex
      * Returns a Generator that yields all the direct child Definitions of a given FQN
      *
      * @param string $fqn
-     * @return \Generator yields Definition
+     * @return \Generator|Definition[]
      */
     public function getChildDefinitionsForFqn(string $fqn): \Generator
     {
@@ -144,7 +144,7 @@ abstract class AbstractAggregateIndex implements ReadableIndex
      * Returns a Generator providing all URIs in this index that reference a symbol
      *
      * @param string $fqn The fully qualified name of the symbol
-     * @return \Generator yields string
+     * @return \Generator|string[]
      */
     public function getReferenceUris(string $fqn): \Generator
     {
