@@ -42,13 +42,14 @@ function nameConcat(string $a, string $b): string
 {
     $a = normalize($a);
     $b = normalize($b);
-    if($a === '') {
+    if ($a === '') {
         return $b;
     }
     return "$a\\$b";
 }
 
-function normalize($name) {
+function normalize($name)
+{
     return trim($name, "\\");
 }
 

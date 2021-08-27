@@ -158,7 +158,7 @@ class Index implements ReadableIndex, \Serializable
 
         $storage =& $this->definitions;
         foreach ($parts as $part) {
-            if($part === end($parts)) {
+            if ($part === end($parts)) {
                 $storage[$part] = $definition;
                 break;
             }
@@ -299,7 +299,7 @@ class Index implements ReadableIndex, \Serializable
         if ($parts) { // empty when "global namespace"
             $lastPart = array_pop($parts);
             // split the last part in 2 parts at the operator
-            if(preg_match(self::MEMBER_REGEX, $lastPart, $matches)) {
+            if (preg_match(self::MEMBER_REGEX, $lastPart, $matches)) {
                 $parts[] = str_replace($matches[0], '', $lastPart);
                 $parts[] = $matches[0];
             } else {
@@ -324,7 +324,7 @@ class Index implements ReadableIndex, \Serializable
         foreach ($parts as $part) {
             /** @var Definition|Definition[] */
             $stored = $storage[$part] ?? null;
-            if($stored === null) {
+            if ($stored === null) {
                 return null;
             } elseif (is_array($stored)) {
                 $return = $storage = $stored;
