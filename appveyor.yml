@@ -42,6 +42,8 @@ install:
 build: off
 
 test_script:
+  - vendor\bin\phpcs -n
+  - vendor\bin\phan --load-baseline=.phan/baseline.php
   - vendor\bin\phpunit --coverage-clover=coverage/coverage.xml
 
 after_test:
