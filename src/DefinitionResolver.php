@@ -5,20 +5,24 @@ namespace LanguageServer;
 
 use LanguageServer\Index\ReadableIndex;
 use LanguageServer\Factory\SymbolInformationFactory;
-use LanguageServerProtocol\SymbolInformation;
 use Microsoft\PhpParser;
+use Microsoft\PhpParser\ClassLike;
 use Microsoft\PhpParser\Node;
 use Microsoft\PhpParser\FunctionLike;
 use Microsoft\PhpParser\MissingToken;
+use Microsoft\PhpParser\NamespacedNameInterface;
 use Microsoft\PhpParser\Node\DelimitedList\ParameterDeclarationList;
+use Microsoft\PhpParser\Node\Expression;
+use Microsoft\PhpParser\Node\Expression\CallExpression;
 use Microsoft\PhpParser\Node\Expression\Variable;
 use Microsoft\PhpParser\Node\QualifiedName;
 use Microsoft\PhpParser\Node\Statement\ClassDeclaration;
 use Microsoft\PhpParser\Node\Statement\FunctionDeclaration;
-use Microsoft\PhpParser\Token;
+use Microsoft\PhpParser\ResolvedName;
 use phpDocumentor\Reflection\{
     DocBlock, DocBlockFactory, Fqsen, Type, TypeResolver, Types
 };
+use phpDocumentor\Reflection\Types\Object_;
 
 use function LanguageServer\ParserHelpers\isConstantFetch;
 use function LanguageServer\array_any;
@@ -349,7 +353,7 @@ class DefinitionResolver
                 if ($prefix === null) {
                     return null;
                 }
-                $name = PhpParser\ResolvedName::buildName($prefix->nameParts, $contents);
+                $name = ResolvedName::buildName($prefix->nameParts, $contents);
                 $name->addNameParts($node->nameParts, $contents);
                 $name = (string)$name;
 
@@ -361,7 +365,7 @@ class DefinitionResolver
                 }
                 return $name;
             } else {
-                $name = (string) PhpParser\ResolvedName::buildName($node->nameParts, $contents);
+                $name = (string)ResolvedName::buildName($node->nameParts, $contents);
                 if ($useClause->groupClauses === null && $useClause->parent->parent->functionOrConst !== null && $useClause->parent->parent->functionOrConst->kind === PhpParser\TokenKind::FunctionKeyword) {
                     $name .= '()';
                 }
@@ -371,7 +375,7 @@ class DefinitionResolver
         }
 
         // For extends, implements, type hints and classes of classes of static calls use the name directly
-        $name = (string) ($node->getResolvedName() ?? $node->getNamespacedName());
+        $name = (string)($node->getResolvedName() ?? $node->getNamespacedName());
 
         if ($node->parent instanceof Node\Expression\CallExpression) {
             $name .= '()';
@@ -409,7 +413,7 @@ class DefinitionResolver
             || $varType instanceof Types\Self_
         ) {
             // $this/static/self is resolved to the containing class
-            $classFqn = self::getContainingClassFqn($access);
+            $classFqn = $this->getContainingClassFqn($access);
         } else if (!($varType instanceof Types\Object_) || $varType->getFqsen() === null) {
             // Left-hand expression could not be resolved to a class
             return null;
@@ -452,9 +456,11 @@ class DefinitionResolver
         return $classFqn . $memberSuffix;
     }
 
+    // TODO: hard to read flow and duplicate code
     private function resolveScopedPropertyAccessExpressionNodeToFqn(Node\Expression\ScopedPropertyAccessExpression $scoped)
     {
         if ($scoped->scopeResolutionQualifier instanceof Variable) {
+            /** @var Object_ */
             $varType = $this->getTypeFromNode($scoped->scopeResolutionQualifier);
             if ($varType === null) {
                 return null;
@@ -510,10 +516,10 @@ class DefinitionResolver
      * @param Node $node
      * @return string|null
      */
-    private static function getContainingClassFqn(Node $node)
+    private function getContainingClassFqn(Node $node)
     {
-        /** @var ClassDeclaration */
-        $classNode = $node->getFirstAncestor(ClassDeclaration::class);
+        /** @var ClassLike&NamespacedNameInterface */
+        $classNode = $node->getFirstAncestor(ClassLike::class); // TODO check diff with ClassDeclaration
         if ($classNode === null) {
             return null;
         }
@@ -641,10 +647,10 @@ class DefinitionResolver
      * Given an expression node, resolves that expression recursively to a type.
      * If the type could not be resolved, returns Types\Mixed_.
      *
-     * @param Node\Expression $expr
+     * @param Expression|QualifiedName $expr
      * @return \phpDocumentor\Reflection\Type|null
      */
-    public function resolveExpressionNodeToType($expr)
+    public function resolveExpressionNodeToType(Node $expr)
     {
         // PARENTHESIZED EXPRESSION
         // Retrieve inner expression from parenthesized expression
@@ -748,7 +754,7 @@ class DefinitionResolver
             }
             for ($i = 0; $t = $objType->get($i); $i++) {
                 if ($t instanceof Types\This) {
-                    $classFqn = self::getContainingClassFqn($expr);
+                    $classFqn = $this->getContainingClassFqn($expr);
                     if ($classFqn === null) {
                         return new Types\Mixed_;
                     }
@@ -1003,10 +1009,10 @@ class DefinitionResolver
      * Takes any class name node (from a static method call, or new node) and returns a Type object
      * Resolves keywords like self, static and parent
      *
-     * @param Node|Token $class
+     * @param Node&NamespacedNameInterface $class
      * @return Type
      */
-    public function resolveClassNameToType($class): Type
+    public function resolveClassNameToType(Node $class): Type
     {
         if ($class instanceof Node\Expression) {
             return new Types\Mixed_;
@@ -1022,23 +1028,21 @@ class DefinitionResolver
         $className = (string)$class->getResolvedName();
 
         if ($className === 'self' || $className === 'parent') {
-            $classNode = $class->getFirstAncestor(Node\Statement\ClassDeclaration::class);
+            /** @var ClassDeclaration */
+            $classNode = $class->getFirstAncestor(ClassDeclaration::class);
             if ($className === 'parent') {
                 if ($classNode === null || $classNode->classBaseClause === null) {
                     return new Types\Object_;
                 }
-                // parent is resolved to the parent class
-                $classFqn = (string)$classNode->classBaseClause->baseClass->getResolvedName();
+                $className = (string)$classNode->classBaseClause->baseClass->getResolvedName();
             } else {
                 if ($classNode === null) {
                     return new Types\Self_;
                 }
-                // self is resolved to the containing class
-                $classFqn = (string)$classNode->getNamespacedName();
+                $className = (string)$classNode->getNamespacedName();
             }
-            return new Types\Object_(new Fqsen('\\' . $classFqn));
         }
-        return new Types\Object_(new Fqsen('\\' . $className));
+        return new Types\Object_(new Fqsen('\\'.$className));
     }
 
     /**
@@ -1226,12 +1230,11 @@ class DefinitionResolver
      * Returns the fully qualified name (FQN) that is defined by a node
      * Returns null if the node does not declare any symbol that can be referenced by an FQN
      *
-     * @param Node $node
+     * @param Node&NamespacedNameInterface $node
      * @return string|null
      */
     public static function getDefinedFqn($node)
     {
-        $parent = $node->parent;
         // Anonymous classes don't count as a definition
         // INPUT                    OUTPUT:
         // namespace A\B;
@@ -1249,11 +1252,11 @@ class DefinitionResolver
             }
             return $className;
         }
-
+        /** @var Node&NamespacedNameInterface $node For IDE to avoid `never` */
         // INPUT                   OUTPUT:
         // namespace A\B;           A\B
         if ($node instanceof Node\Statement\NamespaceDefinition && $node->name instanceof Node\QualifiedName) {
-            $name = (string) PhpParser\ResolvedName::buildName($node->name->nameParts, $node->getFileContents());
+            $name = (string)ResolvedName::buildName($node->name->nameParts, $node->getFileContents());
             return $name === "" ? null : $name;
         }
 
@@ -1263,7 +1266,7 @@ class DefinitionResolver
         if ($node instanceof Node\Statement\FunctionDeclaration) {
             // Function: use functionName() as the name
             $name = (string)$node->getNamespacedName();
-            return $name === "" ? null : $name . '()';
+            return $name === "" ? null : $name.'()';
         }
 
         // INPUT                        OUTPUT
@@ -1274,6 +1277,7 @@ class DefinitionResolver
         // }
         if ($node instanceof Node\MethodDeclaration) {
             // Class method: use ClassName->methodName() as name
+            /** @var NamespacedNameInterface */
             $class = $node->getFirstAncestor(
                 Node\Expression\ObjectCreationExpression::class,
                 PhpParser\ClassLike::class
@@ -1303,6 +1307,7 @@ class DefinitionResolver
                     PhpParser\ClassLike::class
                 )
             ) !== null && isset($classDeclaration->name)) {
+            /** @var NamespacedNameInterface $classDeclaration */
             $name = $node->getName();
             if ($propertyDeclaration->isStatic()) {
                 // Static Property: use ClassName::$propertyName as name
@@ -1326,6 +1331,7 @@ class DefinitionResolver
             }
 
             // Class constant: use ClassName::CONSTANT_NAME as name
+            /** @var NamespacedNameInterface */
             $classDeclaration = $constDeclaration->getFirstAncestor(
                 Node\Expression\ObjectCreationExpression::class,
                 PhpParser\ClassLike::class
@@ -1338,7 +1344,8 @@ class DefinitionResolver
         }
 
         if (ParserHelpers\isConstDefineExpression($node)) {
-            return $node->argumentExpressionList->children[0]->expression->getStringContentsText();
+            /** @var CallExpression $node */
+            return str_replace('\\\\', '\\', $node->argumentExpressionList->children[0]->expression->getStringContentsText()); // TODO check without str_replace
         }
 
         return null;
