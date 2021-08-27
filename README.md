@@ -1,7 +1,7 @@
 # PHP Language Server
 
 [![Version](https://img.shields.io/packagist/v/felixfbecker/language-server.svg)](https://packagist.org/packages/felixfbecker/language-server)
-[![Windows Build status](https://ci.appveyor.com/api/projects/status/v9iaf0u5gsjqa36g/branch/master?svg=true)](https://ci.appveyor.com/project/eytienne/php-language-server/branch/master)
+[![Linux Build status](https://ci.appveyor.com/api/projects/status/v9iaf0u5gsjqa36g/branch/master?svg=true)](https://ci.appveyor.com/project/eytienne/php-language-server/branch/master)
 [![Coverage](https://codecov.io/gh/felixfbecker/php-language-server/branch/master/graph/badge.svg)](https://codecov.io/gh/felixfbecker/php-language-server)
 [![semantic-release](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg)](https://github.com/semantic-release/semantic-release)
 [![Minimum PHP Version](https://img.shields.io/badge/php-%3E%3D%207.0-8892BF.svg)](https://php.net/)
