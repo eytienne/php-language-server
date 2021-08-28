@@ -34,6 +34,7 @@ test_script:
   - vendor/bin/phan --load-baseline=.phan/baseline.php
   - XDEBUG_MODE=coverage vendor/bin/phpunit --coverage-clover=coverage.xml --colors=always
 
-after_test:
-  - bash <(curl -s https://codecov.io/bash)
+# after_test:
+#   # not set up for the moment
+#   - bash <(curl -s https://codecov.io/bash)
 
