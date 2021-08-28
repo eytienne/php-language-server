@@ -4,5 +4,8 @@
     "**/validation": true,
     "**/vendor": false,
     "**/tests/Validation/cases": true,
+  },
+  "yaml.schemas": {
+    "https://json.schemastore.org/appveyor.json": "appveyor.*.yml"
   }
 }

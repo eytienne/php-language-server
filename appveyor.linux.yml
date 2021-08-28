@@ -1,0 +1,39 @@
+version: '{build}'
+
+image: Ubuntu2004
+platform:
+  - x64
+
+skip_tags: true
+skip_branch_with_pr: true
+clone_depth: 1
+max_jobs: 3
+
+cache:
+  - /var/cache/apt/archives/
+  - $HOME/.composer/cache
+  - $HOME/.npm
+
+environment:
+  ANSICON: 121x90 (121x90)
+
+install:
+  - sudo apt-get update
+  - sudo apt-get install -y php7.4-dev composer
+  # for phan/phan
+  - sudo pecl install ast-1.0.14
+    # for phpunit coverage
+  - sudo pecl install xdebug-3.0.4
+  - sudo cp php.ini /etc/php/7.4/cli/
+  - composer install --no-interaction
+
+build: off
+
+test_script:
+  - vendor/bin/phpcs -n
+  - vendor/bin/phan --load-baseline=.phan/baseline.php
+  - XDEBUG_MODE=coverage vendor/bin/phpunit --coverage-clover=coverage.xml --colors=always
+
+after_test:
+  - bash <(curl -s https://codecov.io/bash)
+

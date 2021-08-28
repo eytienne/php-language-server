@@ -16,7 +16,7 @@ cache:
 environment:
   ANSICON: 121x90 (121x90)
   matrix:
-    - { PHP_VERSION: '7.4.3 ', VC_VERSION: '15', XDEBUG_VERSION: '3.4.0' }
+    - { PHP_VERSION: '7.4.3', VC_VERSION: '15', XDEBUG_VERSION: '3.0.4' }
 
 install:
   # Enable Windows Update service, needed to install vcredist2015 (dependency of php)
@@ -25,24 +25,25 @@ install:
   - choco install -y php --version %PHP_VERSION%
   - choco install -y composer
   - refreshenv
-  - composer install --no-interaction --no-progress --prefer-dist
   # Install XDebug for code coverage
   - ps: |
-      $client = New-Object System.Net.WebClient
       $phpMinorVersion = $env:PHP_VERSION -replace '\.\d+$'
-      $xdebugUrl = "https://xdebug.org/files/php_xdebug-$env:XDEBUG_VERSION-$phpMinorVersion-vc$env:VC_VERSION-nts-x86_64.dll"
       $phpDir = (Get-Item (Get-Command php).Source).Directory.FullName
-      $xdebugPath = Join-Path $phpDir ext\xdebug.dll
-      $client.DownloadFile($xdebugUrl, $xdebugPath)
-      $phpIniPath = Join-Path $phpDir php.ini
-      Add-Content $phpIniPath @"
-      zend_extension=$xdebugPath
+      $phpExtDir = "$phpDir\ext"
+      $xdebugUrl = "https://windows.php.net/downloads/pecl/releases/xdebug/$env:XDEBUG_VERSION/php_xdebug-$env:XDEBUG_VERSION-$phpMinorVersion-nts-vc$env:VC_VERSION-x64.zip"
+      echo "Downloading $xdebugUrl"
+      $xdebugZipPath = "C:\msys64\tmp\php_xdebug.zip"
+      Invoke-WebRequest $xdebugUrl -OutFile $xdebugZipPath
+      7z x $xdebugZipPath "-o$phpExtDir" php_xdebug.dll
+      Add-Content $phpDir\php.ini @"
+      zend_extension=xdebug
       "@
+  - composer install --no-interaction --no-progress --prefer-dist
 
 build: off
 
 test_script:
-  - vendor\bin\phpunit --coverage-clover=coverage/coverage.xml
+  - vendor\bin\phpunit --coverage-clover=coverage.xml --colors=always
 
 after_test:
   - ps: |
